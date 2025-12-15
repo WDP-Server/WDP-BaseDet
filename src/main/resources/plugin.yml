@@ -1,0 +1,78 @@
+name: WDP-BaseDet
+version: ${project.version}
+main: com.wdp.basedet.WDPBaseDetPlugin
+api-version: '1.21'
+description: Automatic base detection and protection system
+author: WDP Team
+
+softdepend:
+  - Vault
+  - DiscordSRV
+  - CMI
+  - AuraSkills
+
+commands:
+  basedet:
+    description: Base detection main command
+    aliases: [bd, base]
+    usage: /<command> <subcommand>
+  
+  trust:
+    description: Trust a player in your base
+    usage: /trust [player]
+    
+permissions:
+  basedet.admin:
+    description: Admin permissions for base detection
+    default: op
+    children:
+      basedet.admin.reload: true
+      basedet.admin.debug: true
+      basedet.admin.bypass: true
+      basedet.admin.view: true
+      basedet.admin.force: true
+      
+  basedet.admin.reload:
+    description: Reload the plugin configuration
+    default: op
+    
+  basedet.admin.debug:
+    description: Toggle debug mode
+    default: op
+    
+  basedet.admin.bypass:
+    description: Bypass base protection
+    default: op
+    
+  basedet.admin.view:
+    description: View any player's base
+    default: op
+    
+  basedet.admin.force:
+    description: Force detection on a player
+    default: op
+    
+  basedet.user:
+    description: Basic user permissions
+    default: true
+    children:
+      basedet.user.claim: true
+      basedet.user.trust: true
+      basedet.user.view: true
+      basedet.user.detect: true
+      
+  basedet.user.claim:
+    description: Claim a detected base
+    default: true
+    
+  basedet.user.trust:
+    description: Trust players in your base
+    default: true
+    
+  basedet.user.view:
+    description: View your own base
+    default: true
+    
+  basedet.user.detect:
+    description: Manually trigger base detection
+    default: true

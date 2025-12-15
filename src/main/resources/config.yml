@@ -1,0 +1,336 @@
+# WDP-BaseDet Configuration
+# Automatic base detection and protection system
+
+# ===========================================
+# DATABASE SETTINGS
+# ===========================================
+database:
+  # Type: sqlite or mysql
+  type: sqlite
+  
+  # MySQL settings (only used if type is mysql)
+  mysql:
+    host: localhost
+    port: 3306
+    database: wdp_basedet
+    username: root
+    password: ""
+    # Connection pool settings
+    pool:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+# ===========================================
+# BASE DETECTION SETTINGS
+# ===========================================
+detection:
+  # Score threshold to trigger detection prompt
+  detection-threshold: 100
+  
+  # Minimum time (seconds) between detections for same player
+  detection-cooldown: 300
+  
+  # Score decay settings
+  decay:
+    # Enabled score decay over time
+    enabled: true
+    # Amount to decay per minute (only when online)
+    amount-per-minute: 0.5
+    # Minimum score (won't decay below this)
+    minimum-score: 0
+  
+  # Scoring values for actions
+  scoring:
+    # Block placement
+    block-place: 2.0
+    # Block breaking
+    block-break: 1.5
+    # Chest placement
+    chest-place: 10.0
+    # Crafting table placement
+    crafting-table: 8.0
+    # Furnace placement
+    furnace: 8.0
+    # Anvil placement
+    anvil: 7.0
+    # Enchanting table placement
+    enchanting-table: 12.0
+    # Bed placement (ESSENTIAL - very high confidence!)
+    bed: 20.0
+    # Door/gate/trapdoor placement (ESSENTIAL - high confidence!)
+    door: 12.0
+    # Barrel placement
+    barrel: 6.0
+    # Smoker placement
+    smoker: 6.0
+    # Blast furnace placement
+    blast-furnace: 6.0
+    # Shulker box placement
+    shulker-box: 8.0
+    # Walking (per 10 blocks)
+    walking: 0.1
+    
+  # Proximity bonus settings
+  proximity:
+    # Enabled proximity bonus
+    enabled: true
+    # Radius to check for nearby interactions (blocks)
+    radius: 10
+    # Bonus multiplier when interactions are close together
+    bonus-multiplier: 1.5
+    # Maximum bonus cap
+    max-bonus: 2.0
+
+# ===========================================
+# BASE SIZE LIMITS
+# ===========================================
+limits:
+  # Maximum base size
+  max:
+    width: 200
+    length: 200
+    height: 64
+  # Minimum base size  
+  min:
+    width: 10
+    length: 10
+    height: 3
+  # Offset from placed blocks to determine bounds
+  offset:
+    horizontal: 3
+    vertical: 6
+  # View height offset for rectangle display
+  view-height-offset: 1
+
+# ===========================================
+# MULTIPLE BASES
+# ===========================================
+bases:
+  # Allow multiple bases per player
+  allow-multiple: true
+  # Maximum number of bases per player
+  max-per-player: 3
+  # Minimum distance between bases (blocks)
+  min-distance: 500
+  # Auto-abandon old base when claiming new one
+  auto-abandon-old: true
+
+# ===========================================
+# DETECTION PROMPT SETTINGS
+# ===========================================
+prompt:
+  # Time (seconds) before auto-confirm
+  auto-confirm-time: 600
+  # Pause timer when player leaves
+  pause-on-leave: true
+  # Reward for manual confirmation (SkillCoins)
+  confirm-reward: 50
+  # Reward for manual denial (SkillCoins)
+  deny-reward: 50
+  # No reward for auto-confirm
+  auto-confirm-reward: 0
+
+# ===========================================
+# PARTICLE SETTINGS
+# ===========================================
+particles:
+  # Enable particle visualization
+  enabled: true
+  # Particle type for detection box
+  type: DUST
+  # Particle color (RGB)
+  color:
+    red: 255
+    green: 215
+    blue: 0
+  # Particle size
+  size: 1.0
+  # Spacing between particles
+  spacing: 0.5
+  # Show particles during prompt
+  show-during-prompt: true
+  # Allow toggle via command
+  allow-toggle: true
+
+# ===========================================
+# PROTECTION SETTINGS
+# ===========================================
+protection:
+  # Protect base when owner is offline
+  protect-when-offline: true
+  # Allow interaction when owner is online
+  allow-when-online: true
+  # Protected actions when owner offline
+  protected-actions:
+    block-break: true
+    block-place: true
+    chest-access: true
+    door-interact: true
+    button-interact: true
+    lever-interact: true
+    entity-damage: true
+    item-pickup: false
+
+# ===========================================
+# TRUST SETTINGS
+# ===========================================
+trust:
+  # Default permissions for trusted players when owner is ONLINE
+  default-online:
+    block-break: true
+    block-place: true
+    chest-access: true
+    door-interact: true
+    button-interact: true
+    lever-interact: true
+    entity-damage: true
+    item-pickup: true
+  # Default permissions for trusted players when owner is OFFLINE
+  default-offline:
+    block-break: false
+    block-place: false
+    chest-access: true
+    door-interact: true
+    button-interact: true
+    lever-interact: true
+    entity-damage: false
+    item-pickup: false
+
+# ===========================================
+# EXPANSION DETECTION
+# ===========================================
+expansion:
+  # Enable expansion detection
+  enabled: true
+  # Minimum blocks to trigger expansion prompt
+  min-blocks: 25
+  # Expansion distance threshold (blocks)
+  distance-threshold: 15
+  # No reward for expansion confirmation
+  expansion-reward: 0
+
+# ===========================================
+# SELECTOR TOOL
+# ===========================================
+selector:
+  # Material for selector tool
+  material: BLAZE_ROD
+  # Display name
+  name: "&6Base Selector Tool"
+  # Cost per block to modify (SkillCoins)
+  cost-per-block: 5
+  # Allow shrinking for free
+  shrink-free: true
+
+# ===========================================
+# COMBAT SETTINGS
+# ===========================================
+combat:
+  # Enable smart combat system
+  enabled: true
+  # Use CMI for combat detection (if available)
+  use-cmi: true
+  # Custom combat detection (fallback if CMI unavailable)
+  custom:
+    # Enable custom combat tagging
+    enabled: true
+    # Combat tag duration (seconds)
+    duration: 15
+    # Events that trigger combat
+    triggers:
+      player-damage-player: true
+      player-damage-entity: false
+      projectile-hit: true
+    # Show combat tag message
+    show-message: true
+    # Show boss bar during combat
+    show-bossbar: true
+    # Boss bar color (RED, YELLOW, GREEN, BLUE, PINK, PURPLE, WHITE)
+    bossbar-color: RED
+  # Radius around base to trigger combat rules
+  radius: 50
+  # Allow fighting in base when combat tagged
+  allow-fighting-when-tagged: true
+  # Allow block interactions during combat
+  allow-blocks-during-combat: false
+  # Notify players about combat mechanics
+  notify-players: true
+  # Time after combat ends before revoking privileges (seconds)
+  post-combat-grace: 10
+
+# ===========================================
+# DISCORD INTEGRATION
+# ===========================================
+discord:
+  # Enable Discord notifications
+  enabled: true
+  # DM player when someone enters their base
+  dm-on-entry: true
+  # Allow trusting via Discord reply
+  allow-trust-via-dm: true
+  # Trust keyword in DM
+  trust-keyword: "trust"
+  # Message templates
+  messages:
+    entry: "⚠️ **{intruder}** has entered your base at **{location}**!\nReply with `trust` to trust them."
+    trusted: "✅ **{player}** has been trusted in your base!"
+    combat: "⚔️ Combat detected near your base! **{attacker}** vs **{defender}**"
+
+# ===========================================
+# EXCLUDED BLOCKS
+# ===========================================
+excluded-blocks:
+  # Blocks that don't count for detection
+  - TORCH
+  - WALL_TORCH
+  - SOUL_TORCH
+  - SOUL_WALL_TORCH
+  - REDSTONE_TORCH
+  - REDSTONE_WALL_TORCH
+  - LANTERN
+  - SOUL_LANTERN
+  - CHAIN
+  - LADDER
+  - VINE
+  - GLOW_LICHEN
+  - SCAFFOLDING
+  - COBWEB
+
+# ===========================================
+# MESSAGES
+# ===========================================
+messages:
+  prefix: "&8[&6BaseDet&8] "
+  detection-prompt: "&eWe detected a base at your location! &7Use &f/basedet confirm &7or &f/basedet deny"
+  base-confirmed: "&aBase confirmed! Your base is now protected when you're offline."
+  base-denied: "&cBase detection cancelled."
+  auto-confirmed: "&eYour base was automatically confirmed after 10 minutes."
+  protection-active: "&cThis area is protected! The owner is offline."
+  trusted-added: "&a{player} is now trusted in your base!"
+  trusted-removed: "&c{player} is no longer trusted in your base."
+  combat-tagged: "&c⚔ You are now in combat! Don't log out!"
+  combat-ended: "&a✓ You are no longer in combat."
+  no-permission: "&cYou don't have permission to do that!"
+  no-base: "&cYou don't have any bases! Build more to get detected."
+  player-not-found: "&cPlayer not found: {player}"
+  combat-enter: "&e⚔ Combat detected! Base protection temporarily lifted."
+  combat-leave: "&aYou left the combat zone. Protection restored."
+  no-permission: "&cYou don't have permission to do that!"
+  no-base: "&cYou don't have a detected base yet!"
+  expansion-detected: "&eYour base has expanded! Use &f/basedet confirm &7to update boundaries."
+
+# ===========================================
+# DEBUG SETTINGS
+# ===========================================
+debug:
+  # Enable debug logging
+  enabled: false
+  # Log all interactions
+  log-interactions: false
+  # Log score changes
+  log-score-changes: false
+  # Log protection checks
+  log-protection-checks: false
