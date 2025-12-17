@@ -6,6 +6,7 @@ import com.wdp.basedet.command.TrustCommand;
 import com.wdp.basedet.config.ConfigManager;
 import com.wdp.basedet.database.DatabaseManager;
 import com.wdp.basedet.detection.DetectionManager;
+import com.wdp.basedet.detection.ExpansionManager;
 import com.wdp.basedet.detection.ScoreManager;
 import com.wdp.basedet.integration.CMIIntegration;
 import com.wdp.basedet.integration.DiscordIntegration;
@@ -17,6 +18,7 @@ import com.wdp.basedet.protection.ProtectionManager;
 import com.wdp.basedet.trust.TrustManager;
 import com.wdp.basedet.ui.MenuManager;
 import com.wdp.basedet.util.ParticleManager;
+import com.wdp.basedet.util.SelectorTool;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -41,12 +43,14 @@ public class WDPBaseDetPlugin extends JavaPlugin {
     private ConfigManager configManager;
     private DatabaseManager databaseManager;
     private DetectionManager detectionManager;
+    private ExpansionManager expansionManager;
     private ScoreManager scoreManager;
     private ProtectionManager protectionManager;
     private TrustManager trustManager;
     private MenuManager menuManager;
     private ParticleManager particleManager;
     private CombatManager combatManager;
+    private SelectorTool selectorTool;
     
     // Integrations
     private EconomyIntegration economyIntegration;
@@ -82,10 +86,12 @@ public class WDPBaseDetPlugin extends JavaPlugin {
         getLogger().info("Initializing managers...");
         scoreManager = new ScoreManager(this);
         detectionManager = new DetectionManager(this);
+        expansionManager = new ExpansionManager(this);
         protectionManager = new ProtectionManager(this);
         trustManager = new TrustManager(this);
         menuManager = new MenuManager(this);
         particleManager = new ParticleManager(this);
+        selectorTool = new SelectorTool(this);
         getLogger().info("✓ Managers initialized");
         
         // Setup integrations
@@ -180,6 +186,7 @@ public class WDPBaseDetPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ProtectionListener(this), this);
         Bukkit.getPluginManager().registerEvents(menuManager, this);
+        Bukkit.getPluginManager().registerEvents(selectorTool, this);
         
         getLogger().info("✓ Listeners registered");
     }
@@ -284,6 +291,14 @@ public class WDPBaseDetPlugin extends JavaPlugin {
         return combatManager;
     }
     
+    public ExpansionManager getExpansionManager() {
+        return expansionManager;
+    }
+    
+    public SelectorTool getSelectorTool() {
+        return selectorTool;
+    }
+
     public void debug(String message) {
         if (configManager != null && configManager.isDebugEnabled()) {
             getLogger().info("[DEBUG] " + message);

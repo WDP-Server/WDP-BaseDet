@@ -27,7 +27,7 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
     private final ConfigManager config;
     
     private static final List<String> USER_SUBCOMMANDS = Arrays.asList(
-            "confirm", "deny", "view", "detect", "score", "help"
+            "confirm", "deny", "view", "detect", "score", "help", "tool", "expand", "menu"
     );
     
     private static final List<String> ADMIN_SUBCOMMANDS = Arrays.asList(
@@ -55,6 +55,9 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
             case "detect" -> handleDetect(sender);
             case "score" -> handleScore(sender, args);
             case "help" -> sendHelp(sender);
+            case "tool" -> handleTool(sender);
+            case "expand" -> handleExpand(sender, args);
+            case "menu" -> handleMenu(sender);
             case "reload" -> handleReload(sender);
             case "debug" -> handleDebug(sender);
             case "force" -> handleForce(sender, args);
@@ -62,7 +65,7 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
             case "list" -> handleList(sender, args);
             case "delete" -> handleDelete(sender, args);
             default -> {
-                sender.sendMessage(config.getMessagePrefix() + ChatColor.RED + "Unknown command. Use /basedet help");
+                sender.sendMessage(config.getMessagePrefix() + ChatColor.RED + "Unknown command. Use /base help");
             }
         }
         
@@ -229,6 +232,86 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
                 "Configuration reloaded!");
     }
     
+    private void handleTool(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(ChatColor.RED + "This command can only be used by players!");
+            return;
+        }
+        
+        if (!player.hasPermission("basedet.user.tool")) {
+            player.sendMessage(config.getMessage("no-permission"));
+            return;
+        }
+        
+        // Check if player has a base
+        List<Base> bases = plugin.getDatabaseManager().getPlayerBases(player.getUniqueId());
+        if (bases.isEmpty()) {
+            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
+                    "You don't have a confirmed base yet!");
+            return;
+        }
+        
+        plugin.getSelectorTool().giveSelectorTool(player);
+    }
+    
+    private void handleExpand(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(ChatColor.RED + "This command can only be used by players!");
+            return;
+        }
+        
+        if (args.length < 2) {
+            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
+                    "Usage: /base expand <confirm|deny>");
+            return;
+        }
+        
+        String action = args[1].toLowerCase();
+        
+        switch (action) {
+            case "confirm" -> plugin.getExpansionManager().confirmExpansion(player);
+            case "deny" -> plugin.getExpansionManager().denyExpansion(player);
+            default -> player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
+                    "Usage: /base expand <confirm|deny>");
+        }
+    }
+    
+    private void handleMenu(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(ChatColor.RED + "This command can only be used by players!");
+            return;
+        }
+        
+        if (!player.hasPermission("basedet.user.menu")) {
+            player.sendMessage(config.getMessage("no-permission"));
+            return;
+        }
+        
+        // Get player's base in current world
+        List<Base> bases = plugin.getDatabaseManager().getPlayerBases(player.getUniqueId());
+        Base currentBase = bases.stream()
+                .filter(Base::isConfirmed)
+                .filter(b -> b.getWorldName().equals(player.getWorld().getName()))
+                .findFirst()
+                .orElse(null);
+        
+        if (currentBase == null) {
+            // Try any confirmed base
+            currentBase = bases.stream()
+                    .filter(Base::isConfirmed)
+                    .findFirst()
+                    .orElse(null);
+        }
+        
+        if (currentBase == null) {
+            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
+                    "You don't have a confirmed base yet!");
+            return;
+        }
+        
+        plugin.getMenuManager().openMainMenu(player, currentBase);
+    }
+
     private void handleDebug(CommandSender sender) {
         if (!sender.hasPermission("basedet.admin.debug")) {
             sender.sendMessage(config.getMessage("no-permission"));
@@ -255,7 +338,7 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
         
         if (args.length < 2) {
             sender.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Usage: /basedet force <player>");
+                    "Usage: /base force <player>");
             return;
         }
         
@@ -279,7 +362,7 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
         
         if (args.length < 2) {
             sender.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Usage: /basedet info <player>");
+                    "Usage: /base info <player>");
             return;
         }
         
@@ -333,7 +416,7 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
         
         if (args.length < 2) {
             sender.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Usage: /basedet delete <player>");
+                    "Usage: /base delete <player>");
             return;
         }
         
@@ -360,33 +443,37 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
                 ChatColor.GOLD + " ━━━");
         sender.sendMessage("");
         sender.sendMessage(ChatColor.YELLOW + "User Commands:");
-        sender.sendMessage(ChatColor.WHITE + "  /basedet confirm" + ChatColor.GRAY + 
+        sender.sendMessage(ChatColor.WHITE + "  /base menu" + ChatColor.GRAY + 
+                " - Open base management menu");
+        sender.sendMessage(ChatColor.WHITE + "  /base confirm" + ChatColor.GRAY + 
                 " - Confirm a detected base");
-        sender.sendMessage(ChatColor.WHITE + "  /basedet deny" + ChatColor.GRAY + 
+        sender.sendMessage(ChatColor.WHITE + "  /base deny" + ChatColor.GRAY + 
                 " - Deny a detected base");
-        sender.sendMessage(ChatColor.WHITE + "  /basedet view" + ChatColor.GRAY + 
+        sender.sendMessage(ChatColor.WHITE + "  /base view" + ChatColor.GRAY + 
                 " - Toggle base visualization");
-        sender.sendMessage(ChatColor.WHITE + "  /basedet detect" + ChatColor.GRAY + 
+        sender.sendMessage(ChatColor.WHITE + "  /base detect" + ChatColor.GRAY + 
                 " - Manually trigger detection");
-        sender.sendMessage(ChatColor.WHITE + "  /basedet score" + ChatColor.GRAY + 
+        sender.sendMessage(ChatColor.WHITE + "  /base score" + ChatColor.GRAY + 
                 " - View your detection score");
+        sender.sendMessage(ChatColor.WHITE + "  /base tool" + ChatColor.GRAY + 
+                " - Get base selector tool");
         sender.sendMessage(ChatColor.WHITE + "  /trust" + ChatColor.GRAY + 
                 " - Manage trusted players");
         
         if (sender.hasPermission("basedet.admin")) {
             sender.sendMessage("");
             sender.sendMessage(ChatColor.RED + "Admin Commands:");
-            sender.sendMessage(ChatColor.WHITE + "  /basedet reload" + ChatColor.GRAY + 
+            sender.sendMessage(ChatColor.WHITE + "  /base reload" + ChatColor.GRAY + 
                     " - Reload configuration");
-            sender.sendMessage(ChatColor.WHITE + "  /basedet debug" + ChatColor.GRAY + 
+            sender.sendMessage(ChatColor.WHITE + "  /base debug" + ChatColor.GRAY + 
                     " - View debug info");
-            sender.sendMessage(ChatColor.WHITE + "  /basedet force <player>" + ChatColor.GRAY + 
+            sender.sendMessage(ChatColor.WHITE + "  /base force <player>" + ChatColor.GRAY + 
                     " - Force detection");
-            sender.sendMessage(ChatColor.WHITE + "  /basedet info <player>" + ChatColor.GRAY + 
+            sender.sendMessage(ChatColor.WHITE + "  /base info <player>" + ChatColor.GRAY + 
                     " - View player info");
-            sender.sendMessage(ChatColor.WHITE + "  /basedet list" + ChatColor.GRAY + 
+            sender.sendMessage(ChatColor.WHITE + "  /base list" + ChatColor.GRAY + 
                     " - List all bases");
-            sender.sendMessage(ChatColor.WHITE + "  /basedet delete <player>" + ChatColor.GRAY + 
+            sender.sendMessage(ChatColor.WHITE + "  /base delete <player>" + ChatColor.GRAY + 
                     " - Delete player's bases");
         }
         sender.sendMessage("");

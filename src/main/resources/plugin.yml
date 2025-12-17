@@ -12,9 +12,9 @@ softdepend:
   - AuraSkills
 
 commands:
-  basedet:
+  base:
     description: Base detection main command
-    aliases: [bd, base]
+    aliases: [bd, basedet]
     usage: /<command> <subcommand>
   
   trust:
@@ -60,6 +60,8 @@ permissions:
       basedet.user.trust: true
       basedet.user.view: true
       basedet.user.detect: true
+      basedet.user.tool: true
+      basedet.user.menu: true
       
   basedet.user.claim:
     description: Claim a detected base
@@ -75,4 +77,12 @@ permissions:
     
   basedet.user.detect:
     description: Manually trigger base detection
+    default: true
+    
+  basedet.user.tool:
+    description: Use the selector tool
+    default: true
+    
+  basedet.user.menu:
+    description: Open the base management menu
     default: true

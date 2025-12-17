@@ -258,6 +258,14 @@ public class ScoreManager {
     }
     
     /**
+     * Check if a block is excluded in a specific dimension
+     * (e.g., beds in nether/end, respawn anchors in overworld)
+     */
+    public boolean isDimensionExcluded(Material material, org.bukkit.World.Environment environment) {
+        return config.isDimensionExcluded(material, environment);
+    }
+    
+    /**
      * Decay scores for all online players
      * Called periodically by scheduled task
      */

@@ -32,8 +32,17 @@ public class BlockListener implements Listener {
         Block block = event.getBlock();
         Material material = block.getType();
         
-        // Check if block is excluded
+        // Check if block is excluded globally
         if (scoreManager.isExcludedBlock(material)) {
+            return;
+        }
+        
+        // Check if block is excluded in this dimension (e.g., beds in nether)
+        if (scoreManager.isDimensionExcluded(material, block.getWorld().getEnvironment())) {
+            if (plugin.getConfigManager().isLogInteractions()) {
+                plugin.debug(String.format("Block excluded in dimension: %s placed %s in %s",
+                        player.getName(), material.name(), block.getWorld().getEnvironment()));
+            }
             return;
         }
         
@@ -59,6 +68,11 @@ public class BlockListener implements Listener {
         // Add score
         scoreManager.addScore(player, interaction);
         
+        // Track for expansion detection
+        if (plugin.getExpansionManager() != null) {
+            plugin.getExpansionManager().trackInteraction(player.getUniqueId(), interaction);
+        }
+        
         // Log if enabled
         if (plugin.getConfigManager().isLogInteractions()) {
             plugin.debug(String.format("Block place: %s placed %s at %d,%d,%d (score: %.2f)",
@@ -73,8 +87,13 @@ public class BlockListener implements Listener {
         Block block = event.getBlock();
         Material material = block.getType();
         
-        // Check if block is excluded
+        // Check if block is excluded globally
         if (scoreManager.isExcludedBlock(material)) {
+            return;
+        }
+        
+        // Check if block is excluded in this dimension
+        if (scoreManager.isDimensionExcluded(material, block.getWorld().getEnvironment())) {
             return;
         }
         

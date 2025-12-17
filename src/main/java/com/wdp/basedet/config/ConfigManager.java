@@ -61,6 +61,10 @@ public class ConfigManager {
     private boolean allowTrustViaDM;
     private String trustKeyword;
     private Set<Material> excludedBlocks;
+    private boolean dimensionExclusionsEnabled;
+    private Set<Material> netherExcludedBlocks;
+    private Set<Material> endExcludedBlocks;
+    private Set<Material> overworldExcludedBlocks;
     private boolean debugEnabled;
     private boolean logInteractions;
     private boolean logScoreChanges;
@@ -157,6 +161,12 @@ public class ConfigManager {
                 plugin.getLogger().warning("Invalid material in excluded-blocks: " + blockName);
             }
         }
+        
+        // Dimension-specific exclusions
+        dimensionExclusionsEnabled = config.getBoolean("dimension-exclusions.enabled", true);
+        netherExcludedBlocks = loadMaterialSet("dimension-exclusions.nether");
+        endExcludedBlocks = loadMaterialSet("dimension-exclusions.end");
+        overworldExcludedBlocks = loadMaterialSet("dimension-exclusions.overworld");
         
         // Debug
         debugEnabled = config.getBoolean("debug.enabled", false);
@@ -338,6 +348,42 @@ public class ConfigManager {
         return message.replace("&", "§");
     }
     
+    /**
+     * Load a set of materials from a config list
+     */
+    private Set<Material> loadMaterialSet(String path) {
+        Set<Material> materials = new HashSet<>();
+        List<String> list = config.getStringList(path);
+        for (String blockName : list) {
+            try {
+                Material mat = Material.valueOf(blockName.toUpperCase());
+                materials.add(mat);
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("Invalid material in " + path + ": " + blockName);
+            }
+        }
+        return materials;
+    }
+    
+    /**
+     * Check if a block is excluded in a specific dimension
+     * @param material The block material
+     * @param environment The world environment (NORMAL, NETHER, THE_END)
+     * @return true if the block should be excluded in this dimension
+     */
+    public boolean isDimensionExcluded(Material material, org.bukkit.World.Environment environment) {
+        if (!dimensionExclusionsEnabled) {
+            return false;
+        }
+        
+        return switch (environment) {
+            case NETHER -> netherExcludedBlocks.contains(material);
+            case THE_END -> endExcludedBlocks.contains(material);
+            case NORMAL -> overworldExcludedBlocks.contains(material);
+            default -> false;
+        };
+    }
+    
     // All cached getters
     public String getDatabaseType() { return databaseType; }
     public double getDetectionThreshold() { return detectionThreshold; }
@@ -385,6 +431,10 @@ public class ConfigManager {
     public boolean isAllowTrustViaDM() { return allowTrustViaDM; }
     public String getTrustKeyword() { return trustKeyword; }
     public Set<Material> getExcludedBlocks() { return excludedBlocks; }
+    public boolean isDimensionExclusionsEnabled() { return dimensionExclusionsEnabled; }
+    public Set<Material> getNetherExcludedBlocks() { return netherExcludedBlocks; }
+    public Set<Material> getEndExcludedBlocks() { return endExcludedBlocks; }
+    public Set<Material> getOverworldExcludedBlocks() { return overworldExcludedBlocks; }
     public boolean isDebugEnabled() { return debugEnabled; }
     public boolean isLogInteractions() { return logInteractions; }
     public boolean isLogScoreChanges() { return logScoreChanges; }

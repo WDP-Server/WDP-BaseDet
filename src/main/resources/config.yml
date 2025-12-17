@@ -300,11 +300,66 @@ excluded-blocks:
   - COBWEB
 
 # ===========================================
+# DIMENSION-SPECIFIC EXCLUSIONS
+# ===========================================
+# Blocks that are excluded from scoring in specific dimensions
+# This is useful for items used as weapons (beds in nether/end)
+# or items that don't make sense in certain dimensions
+dimension-exclusions:
+  # Enabled dimension-specific exclusions
+  enabled: true
+  
+  # Nether exclusions (THE_NETHER)
+  # Beds explode in the nether, so they're often used as weapons, not bases
+  nether:
+    - WHITE_BED
+    - ORANGE_BED
+    - MAGENTA_BED
+    - LIGHT_BLUE_BED
+    - YELLOW_BED
+    - LIME_BED
+    - PINK_BED
+    - GRAY_BED
+    - LIGHT_GRAY_BED
+    - CYAN_BED
+    - PURPLE_BED
+    - BLUE_BED
+    - BROWN_BED
+    - GREEN_BED
+    - RED_BED
+    - BLACK_BED
+  
+  # End exclusions (THE_END)
+  # Beds also explode in the end
+  end:
+    - WHITE_BED
+    - ORANGE_BED
+    - MAGENTA_BED
+    - LIGHT_BLUE_BED
+    - YELLOW_BED
+    - LIME_BED
+    - PINK_BED
+    - GRAY_BED
+    - LIGHT_GRAY_BED
+    - CYAN_BED
+    - PURPLE_BED
+    - BLUE_BED
+    - BROWN_BED
+    - GREEN_BED
+    - RED_BED
+    - BLACK_BED
+  
+  # Overworld exclusions (NORMAL)
+  # Respawn anchors don't work properly in overworld
+  overworld:
+    - RESPAWN_ANCHOR
+
+# ===========================================
 # MESSAGES
 # ===========================================
 messages:
   prefix: "&8[&6BaseDet&8] "
-  detection-prompt: "&eWe detected a base at your location! &7Use &f/basedet confirm &7or &f/basedet deny"
+  detection-prompt: "&eWe detected a base at your location! &7Use &f/base confirm &7or &f/base deny"
   base-confirmed: "&aBase confirmed! Your base is now protected when you're offline."
   base-denied: "&cBase detection cancelled."
   auto-confirmed: "&eYour base was automatically confirmed after 10 minutes."
@@ -320,7 +375,7 @@ messages:
   combat-leave: "&aYou left the combat zone. Protection restored."
   no-permission: "&cYou don't have permission to do that!"
   no-base: "&cYou don't have a detected base yet!"
-  expansion-detected: "&eYour base has expanded! Use &f/basedet confirm &7to update boundaries."
+  expansion-detected: "&eYour base has expanded! Use &f/base confirm &7to update boundaries."
 
 # ===========================================
 # DEBUG SETTINGS
