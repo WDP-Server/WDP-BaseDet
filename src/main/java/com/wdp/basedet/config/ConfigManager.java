@@ -237,6 +237,15 @@ public class ConfigManager {
         return config.getDouble("detection.scoring.walking", 0.1);
     }
     
+    // Score limits (max times a block type can add score)
+    public int getBedScoreLimit() {
+        return config.getInt("detection.score-limits.bed", 1);
+    }
+    
+    public int getDoorScoreLimit() {
+        return config.getInt("detection.score-limits.door", 3);
+    }
+    
     // Trust default permissions
     public boolean getTrustDefaultOnline(String permission) {
         return config.getBoolean("trust.default-online." + permission, true);
@@ -269,6 +278,10 @@ public class ConfigManager {
     }
     
     // Selector
+    public boolean isSelectorEnabled() {
+        return config.getBoolean("selector.enabled", false);
+    }
+    
     public Material getSelectorMaterial() {
         try {
             return Material.valueOf(config.getString("selector.material", "BLAZE_ROD").toUpperCase());
@@ -287,6 +300,35 @@ public class ConfigManager {
     
     public boolean isShrinkFree() {
         return config.getBoolean("selector.shrink-free", true);
+    }
+    
+    // Teleport settings
+    public boolean isTeleportEnabled() {
+        return config.getBoolean("teleport.enabled", true);
+    }
+    
+    public double getTeleportCost() {
+        return config.getDouble("teleport.cost", 100);
+    }
+    
+    public int getTeleportCooldown() {
+        return config.getInt("teleport.cooldown", 300);
+    }
+    
+    public int getTeleportDelay() {
+        return config.getInt("teleport.delay", 5);
+    }
+    
+    public boolean isTeleportCancelOnMove() {
+        return config.getBoolean("teleport.cancel-on-move", true);
+    }
+    
+    public boolean isTeleportCancelOnDamage() {
+        return config.getBoolean("teleport.cancel-on-damage", true);
+    }
+    
+    public boolean isTeleportBlockedInCombat() {
+        return config.getBoolean("teleport.block-in-combat", true);
     }
     
     // MySQL settings

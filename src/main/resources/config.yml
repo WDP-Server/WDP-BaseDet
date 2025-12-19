@@ -73,6 +73,13 @@ detection:
     # Walking (per 10 blocks)
     walking: 0.1
     
+  # Score limits - max times a block type can increase score per player
+  score-limits:
+    # Beds can only count once (prevent bed farms)
+    bed: 1
+    # Doors can count up to 3 times
+    door: 3
+    
   # Proximity bonus settings
   proximity:
     # Enabled proximity bonus
@@ -216,6 +223,8 @@ expansion:
 # SELECTOR TOOL
 # ===========================================
 selector:
+  # Enable selector tool (set to false to disable while in development)
+  enabled: false
   # Material for selector tool
   material: BLAZE_ROD
   # Display name
@@ -224,6 +233,25 @@ selector:
   cost-per-block: 5
   # Allow shrinking for free
   shrink-free: true
+
+# ===========================================
+# TELEPORT SETTINGS
+# ===========================================
+teleport:
+  # Enable teleport to base feature
+  enabled: true
+  # Cost to teleport (SkillCoins)
+  cost: 100
+  # Cooldown between teleports (seconds)
+  cooldown: 300
+  # Delay before teleporting (seconds, 0 = instant)
+  delay: 5
+  # Cancel teleport if player moves during delay
+  cancel-on-move: true
+  # Cancel teleport if player takes damage during delay
+  cancel-on-damage: true
+  # Block teleport while in combat
+  block-in-combat: true
 
 # ===========================================
 # COMBAT SETTINGS

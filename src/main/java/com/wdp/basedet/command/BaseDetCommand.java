@@ -41,8 +41,9 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
     
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        // No args = open main menu
         if (args.length == 0) {
-            sendHelp(sender);
+            handleMenu(sender);
             return true;
         }
         
@@ -243,6 +244,13 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
             return;
         }
         
+        // Check if selector is enabled
+        if (!config.isSelectorEnabled()) {
+            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
+                    "The selector tool is currently disabled!");
+            return;
+        }
+        
         // Check if player has a base
         List<Base> bases = plugin.getDatabaseManager().getPlayerBases(player.getUniqueId());
         if (bases.isEmpty()) {
@@ -287,29 +295,25 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
             return;
         }
         
-        // Get player's base in current world
-        List<Base> bases = plugin.getDatabaseManager().getPlayerBases(player.getUniqueId());
-        Base currentBase = bases.stream()
+        // Get player's confirmed bases
+        List<Base> confirmedBases = plugin.getDatabaseManager().getPlayerBases(player.getUniqueId())
+                .stream()
                 .filter(Base::isConfirmed)
-                .filter(b -> b.getWorldName().equals(player.getWorld().getName()))
-                .findFirst()
-                .orElse(null);
+                .toList();
         
-        if (currentBase == null) {
-            // Try any confirmed base
-            currentBase = bases.stream()
-                    .filter(Base::isConfirmed)
-                    .findFirst()
-                    .orElse(null);
-        }
-        
-        if (currentBase == null) {
+        if (confirmedBases.isEmpty()) {
             player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
                     "You don't have a confirmed base yet!");
             return;
         }
         
-        plugin.getMenuManager().openMainMenu(player, currentBase);
+        // If player has multiple bases, open base selector
+        if (confirmedBases.size() > 1) {
+            plugin.getMenuManager().openBaseSelector(player, confirmedBases);
+        } else {
+            // Single base - open main menu directly
+            plugin.getMenuManager().openMainMenu(player, confirmedBases.get(0));
+        }
     }
 
     private void handleDebug(CommandSender sender) {

@@ -6,18 +6,23 @@ import com.wdp.basedet.model.BoundingBox;
 import com.wdp.basedet.model.TrustEntry;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -41,6 +46,12 @@ public class MenuManager implements Listener {
     
     // Track open menus
     private final Map<UUID, MenuSession> openMenus = new ConcurrentHashMap<>();
+    
+    // Track pending teleports
+    private final Map<UUID, TeleportTask> pendingTeleports = new ConcurrentHashMap<>();
+    
+    // Track teleport cooldowns
+    private final Map<UUID, Long> teleportCooldowns = new ConcurrentHashMap<>();
     
     // Menu identifiers (use Unicode for uniqueness)
     private static final String MENU_ID = "§8§l";
@@ -138,6 +149,9 @@ public class MenuManager implements Listener {
                 false
         ));
         
+        // Teleport to Base (slot 30) - NEW!
+        inv.setItem(30, createTeleportItem(player, base));
+        
         // Base Stats (slot 31)
         inv.setItem(31, createMenuItem(
                 Material.BOOK,
@@ -176,6 +190,148 @@ public class MenuManager implements Listener {
         
         player.openInventory(inv);
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.5f, 1.2f);
+    }
+    
+    // ==================== BASE SELECTOR MENU ====================
+    
+    /**
+     * Open the base selector menu when player has multiple bases
+     * Uses biome/dimension as icon, center-aligned
+     */
+    public void openBaseSelector(Player player, List<Base> bases) {
+        String title = hex("#FFD700") + "✦ " + hex("#FFFFFF") + "Select a Base";
+        Inventory inv = Bukkit.createInventory(null, 54, MENU_ID + title);
+        
+        // Fill background
+        fillBackground(inv, Material.GRAY_STAINED_GLASS_PANE);
+        
+        // Header
+        inv.setItem(4, createMenuItem(
+                Material.COMPASS,
+                hex("#FFD700") + "✦ Your Bases",
+                Arrays.asList(
+                        "",
+                        hex("#AAAAAA") + "You have " + hex("#FFFFFF") + bases.size() + hex("#AAAAAA") + " bases.",
+                        "",
+                        hex("#FFFF55") + "Click a base to manage it"
+                ),
+                false
+        ));
+        
+        // Calculate center-aligned slots based on number of bases
+        int[] slots = getCenteredSlots(bases.size());
+        
+        for (int i = 0; i < Math.min(bases.size(), slots.length); i++) {
+            Base base = bases.get(i);
+            inv.setItem(slots[i], createBaseSelectorItem(base, i + 1));
+        }
+        
+        // Add selector navbar
+        addSelectorNavbar(inv);
+        
+        // Track menu with list of bases stored
+        Map<String, Object> data = new HashMap<>();
+        data.put("bases", bases);
+        openMenus.put(player.getUniqueId(), new MenuSession(MenuType.BASE_SELECTOR, null, null, 1, data));
+        
+        player.openInventory(inv);
+        player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.5f, 1.2f);
+    }
+    
+    /**
+     * Get center-aligned slots for base icons
+     */
+    private int[] getCenteredSlots(int count) {
+        // Row 2 (slots 10-16) and Row 3 (slots 19-25) for bases
+        return switch (count) {
+            case 1 -> new int[]{22}; // Center
+            case 2 -> new int[]{21, 23}; // Two centered
+            case 3 -> new int[]{20, 22, 24}; // Three centered
+            case 4 -> new int[]{19, 21, 23, 25}; // Four spread
+            case 5 -> new int[]{20, 22, 24, 29, 33}; // Five (3 top, 2 bottom)
+            case 6 -> new int[]{20, 22, 24, 29, 31, 33}; // Six (3 + 3)
+            default -> new int[]{19, 20, 21, 22, 23, 24, 25}; // Max 7
+        };
+    }
+    
+    /**
+     * Create a base selector item with dimension/biome icon
+     */
+    private ItemStack createBaseSelectorItem(Base base, int number) {
+        World world = Bukkit.getWorld(base.getWorldName());
+        Material icon = getDimensionIcon(world);
+        String dimensionName = getDimensionName(world);
+        
+        BoundingBox bounds = base.getBounds();
+        int volume = bounds.getWidth() * bounds.getLength() * bounds.getHeight();
+        
+        ItemStack item = new ItemStack(icon);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(hex("#55FFFF") + "✦ Base #" + number + " " + hex("#666666") + "(" + dimensionName + ")");
+        
+        List<String> lore = new ArrayList<>();
+        lore.add("");
+        lore.add(hex("#AAAAAA") + "World: " + hex("#FFFFFF") + base.getWorldName());
+        lore.add(hex("#AAAAAA") + "Size: " + hex("#55FF55") + bounds.getWidth() + "×" + bounds.getLength() + "×" + bounds.getHeight());
+        lore.add(hex("#AAAAAA") + "Volume: " + hex("#FFD700") + String.format("%,d", volume) + " blocks");
+        lore.add("");
+        lore.add(hex("#AAAAAA") + "Center: " + hex("#55FFFF") + 
+                ((bounds.getMinX() + bounds.getMaxX()) / 2) + ", " + 
+                ((bounds.getMinY() + bounds.getMaxY()) / 2) + ", " + 
+                ((bounds.getMinZ() + bounds.getMaxZ()) / 2));
+        lore.add("");
+        lore.add(hex("#55FF55") + "✓ " + hex("#AAAAAA") + "Protected & Confirmed");
+        lore.add("");
+        lore.add(hex("#FFFF55") + "▸ Click to manage this base");
+        
+        meta.setLore(lore);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        item.setItemMeta(meta);
+        return item;
+    }
+    
+    /**
+     * Get icon material based on dimension
+     */
+    private Material getDimensionIcon(World world) {
+        if (world == null) return Material.GRASS_BLOCK;
+        
+        return switch (world.getEnvironment()) {
+            case NETHER -> Material.NETHERRACK;
+            case THE_END -> Material.END_STONE;
+            case NORMAL -> Material.GRASS_BLOCK;
+            default -> Material.STONE;
+        };
+    }
+    
+    /**
+     * Get dimension display name
+     */
+    private String getDimensionName(World world) {
+        if (world == null) return "Unknown";
+        
+        return switch (world.getEnvironment()) {
+            case NETHER -> "Nether";
+            case THE_END -> "End";
+            case NORMAL -> "Overworld";
+            default -> "Custom";
+        };
+    }
+    
+    private void addSelectorNavbar(Inventory inv) {
+        // Empty decorations
+        ItemStack deco = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+        ItemMeta decoMeta = deco.getItemMeta();
+        decoMeta.setDisplayName(" ");
+        deco.setItemMeta(decoMeta);
+        
+        for (int i = 45; i <= 52; i++) {
+            inv.setItem(i, deco);
+        }
+        
+        // Close (slot 53)
+        ItemStack close = createNavItem(Material.BARRIER, hex("#FF5555") + "✗ Close", "Close this menu");
+        inv.setItem(53, close);
     }
     
     // ==================== TRUST MANAGER MENU ====================
@@ -593,6 +749,7 @@ public class MenuManager implements Listener {
             case MAIN -> handleMainMenuClick(player, session, slot, event.isShiftClick());
             case TRUST_LIST -> handleTrustListClick(player, session, slot, clicked);
             case TRUST_PERMS -> handlePermsClick(player, session, slot);
+            case BASE_SELECTOR -> handleBaseSelectorClick(player, session, slot, clicked);
             case STATS, SETTINGS -> {} // View-only menus
         }
     }
@@ -602,6 +759,10 @@ public class MenuManager implements Listener {
             case 20 -> openTrustMenu(player, session.base); // Trust Manager
             case 22 -> openSettingsMenu(player, session.base); // Settings
             case 24 -> { // Selector Tool
+                if (!plugin.getConfigManager().isSelectorEnabled()) {
+                    player.sendMessage(plugin.getConfigManager().getMessagePrefix() + hex("#FF5555") + "Selector tool is disabled!");
+                    return;
+                }
                 player.closeInventory();
                 plugin.getSelectorTool().giveSelectorTool(player);
             }
@@ -612,6 +773,10 @@ public class MenuManager implements Listener {
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
                 openMainMenu(player, session.base); // Refresh
             }
+            case 30 -> { // Teleport to base
+                player.closeInventory();
+                startTeleport(player, session.base);
+            }
             case 31 -> openStatsMenu(player, session.base); // Stats
             case 33 -> { // Abandon base
                 if (shift) {
@@ -621,6 +786,31 @@ public class MenuManager implements Listener {
                     player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 0.8f);
                 } else {
                     player.sendMessage(plugin.getConfigManager().getMessagePrefix() + hex("#FFFF55") + "Shift-click to abandon!");
+                }
+            }
+        }
+    }
+    
+    @SuppressWarnings("unchecked")
+    private void handleBaseSelectorClick(Player player, MenuSession session, int slot, ItemStack clicked) {
+        // Get bases from session data
+        if (session.data == null) return;
+        List<Base> bases = (List<Base>) session.data.get("bases");
+        if (bases == null) return;
+        
+        // Check if clicked a base item (grass_block, netherrack, end_stone)
+        Material type = clicked.getType();
+        if (type == Material.GRASS_BLOCK || type == Material.NETHERRACK || 
+            type == Material.END_STONE || type == Material.STONE) {
+            
+            // Find which base was clicked based on slot
+            int[] slots = getCenteredSlots(bases.size());
+            for (int i = 0; i < slots.length && i < bases.size(); i++) {
+                if (slots[i] == slot) {
+                    Base selectedBase = bases.get(i);
+                    openMainMenu(player, selectedBase);
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
+                    return;
                 }
             }
         }
@@ -1012,10 +1202,290 @@ public class MenuManager implements Listener {
         return ChatColor.of(code).toString();
     }
     
+    // ==================== TELEPORT SYSTEM ====================
+    
+    /**
+     * Create the teleport menu item with proper status display
+     */
+    private ItemStack createTeleportItem(Player player, Base base) {
+        var config = plugin.getConfigManager();
+        boolean enabled = config.isTeleportEnabled();
+        UUID uuid = player.getUniqueId();
+        
+        List<String> lore = new ArrayList<>();
+        lore.add("");
+        
+        if (!enabled) {
+            return createMenuItem(
+                    Material.GRAY_DYE,
+                    hex("#666666") + "✦ Teleport Disabled",
+                    Arrays.asList("", hex("#666666") + "This feature is disabled", hex("#666666") + "by the server."),
+                    false
+            );
+        }
+        
+        // Check combat
+        boolean inCombat = plugin.getCombatManager() != null && plugin.getCombatManager().isInCombat(player);
+        if (inCombat && config.isTeleportBlockedInCombat()) {
+            int remaining = plugin.getCombatManager().getCombatTimeRemaining(player);
+            return createMenuItem(
+                    Material.RED_DYE,
+                    hex("#FF5555") + "✦ Teleport Blocked",
+                    Arrays.asList(
+                            "",
+                            hex("#FF5555") + "⚔ You are in combat!",
+                            "",
+                            hex("#AAAAAA") + "Wait " + hex("#FFFF55") + remaining + "s" + hex("#AAAAAA") + " before teleporting.",
+                            "",
+                            hex("#666666") + "Combat disables teleportation"
+                    ),
+                    false
+            );
+        }
+        
+        // Check cooldown
+        Long lastTp = teleportCooldowns.get(uuid);
+        int cooldown = config.getTeleportCooldown();
+        if (lastTp != null) {
+            long elapsed = (System.currentTimeMillis() - lastTp) / 1000;
+            if (elapsed < cooldown) {
+                int remaining = (int) (cooldown - elapsed);
+                return createMenuItem(
+                        Material.CLOCK,
+                        hex("#FFAA00") + "✦ Teleport on Cooldown",
+                        Arrays.asList(
+                                "",
+                                hex("#AAAAAA") + "Wait " + hex("#FFFF55") + remaining + "s" + hex("#AAAAAA") + " before teleporting.",
+                                "",
+                                hex("#666666") + "Cooldown: " + cooldown + "s"
+                        ),
+                        false
+                );
+            }
+        }
+        
+        // Ready to teleport
+        double cost = config.getTeleportCost();
+        int delay = config.getTeleportDelay();
+        
+        lore.add(hex("#AAAAAA") + "Teleport to the center");
+        lore.add(hex("#AAAAAA") + "of your base.");
+        lore.add("");
+        if (cost > 0) {
+            lore.add(hex("#666666") + "Cost: " + hex("#FFD700") + cost + " SkillCoins");
+        }
+        if (delay > 0) {
+            lore.add(hex("#666666") + "Delay: " + hex("#FFFF55") + delay + "s");
+            if (config.isTeleportCancelOnMove()) {
+                lore.add(hex("#666666") + "• Cancelled if you move");
+            }
+            if (config.isTeleportCancelOnDamage()) {
+                lore.add(hex("#666666") + "• Cancelled if damaged");
+            }
+        }
+        if (config.isTeleportBlockedInCombat()) {
+            lore.add(hex("#666666") + "• Blocked during combat");
+        }
+        lore.add("");
+        lore.add(hex("#FFFF55") + "▸ Click to teleport");
+        
+        return createMenuItem(Material.ENDER_PEARL, hex("#AA55FF") + "✦ Teleport to Base", lore, false);
+    }
+    
+    /**
+     * Start the teleport process
+     */
+    public void startTeleport(Player player, Base base) {
+        var config = plugin.getConfigManager();
+        UUID uuid = player.getUniqueId();
+        
+        // Final checks
+        if (!config.isTeleportEnabled()) {
+            player.sendMessage(config.getMessagePrefix() + hex("#FF5555") + "Teleportation is disabled!");
+            return;
+        }
+        
+        // Combat check
+        if (config.isTeleportBlockedInCombat() && plugin.getCombatManager() != null && plugin.getCombatManager().isInCombat(player)) {
+            player.sendMessage(config.getMessagePrefix() + hex("#FF5555") + "Cannot teleport while in combat!");
+            return;
+        }
+        
+        // Cooldown check
+        Long lastTp = teleportCooldowns.get(uuid);
+        int cooldown = config.getTeleportCooldown();
+        if (lastTp != null) {
+            long elapsed = (System.currentTimeMillis() - lastTp) / 1000;
+            if (elapsed < cooldown) {
+                int remaining = (int) (cooldown - elapsed);
+                player.sendMessage(config.getMessagePrefix() + hex("#FFFF55") + "Teleport on cooldown! Wait " + remaining + "s");
+                return;
+            }
+        }
+        
+        // Economy check
+        double cost = config.getTeleportCost();
+        if (cost > 0 && plugin.getEconomyIntegration() != null && plugin.getEconomyIntegration().isEnabled()) {
+            if (!plugin.getEconomyIntegration().hasBalance(player, cost)) {
+                player.sendMessage(config.getMessagePrefix() + hex("#FF5555") + "Not enough SkillCoins! Need " + cost);
+                return;
+            }
+        }
+        
+        // Calculate destination (center of base, surface)
+        BoundingBox bounds = base.getBounds();
+        int centerX = (bounds.getMinX() + bounds.getMaxX()) / 2;
+        int centerZ = (bounds.getMinZ() + bounds.getMaxZ()) / 2;
+        World world = Bukkit.getWorld(base.getWorldName());
+        
+        if (world == null) {
+            player.sendMessage(config.getMessagePrefix() + hex("#FF5555") + "World not found!");
+            return;
+        }
+        
+        // Find safe Y (top of base, then search up)
+        int safeY = findSafeY(world, centerX, bounds.getMaxY(), centerZ);
+        Location destination = new Location(world, centerX + 0.5, safeY, centerZ + 0.5, player.getLocation().getYaw(), player.getLocation().getPitch());
+        
+        int delay = config.getTeleportDelay();
+        
+        if (delay <= 0) {
+            // Instant teleport
+            executeTeleport(player, base, destination, (int) cost);
+        } else {
+            // Delayed teleport
+            player.sendMessage(config.getMessagePrefix() + hex("#55FFFF") + "Teleporting in " + delay + " seconds... Don't move!");
+            player.playSound(player.getLocation(), Sound.BLOCK_PORTAL_TRIGGER, 0.5f, 2.0f);
+            
+            Location startLoc = player.getLocation().clone();
+            
+            TeleportTask task = new TeleportTask(player, base, destination, (int) cost, startLoc);
+            BukkitTask bukkitTask = new BukkitRunnable() {
+                int countdown = delay;
+                
+                @Override
+                public void run() {
+                    if (!player.isOnline()) {
+                        cancelTeleport(uuid, "Disconnected");
+                        cancel();
+                        return;
+                    }
+                    
+                    TeleportTask current = pendingTeleports.get(uuid);
+                    if (current == null || current.cancelled) {
+                        cancel();
+                        return;
+                    }
+                    
+                    countdown--;
+                    
+                    if (countdown > 0) {
+                        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.0f + (0.1f * (delay - countdown)));
+                    }
+                    
+                    if (countdown <= 0) {
+                        pendingTeleports.remove(uuid);
+                        executeTeleport(player, base, destination, (int) cost);
+                        cancel();
+                    }
+                }
+            }.runTaskTimer(plugin, 20L, 20L);
+            
+            task.task = bukkitTask;
+            pendingTeleports.put(uuid, task);
+        }
+    }
+    
+    /**
+     * Cancel a pending teleport
+     */
+    public void cancelTeleport(UUID uuid, String reason) {
+        TeleportTask task = pendingTeleports.remove(uuid);
+        if (task != null && !task.cancelled) {
+            task.cancelled = true;
+            if (task.task != null) {
+                task.task.cancel();
+            }
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null) {
+                player.sendMessage(plugin.getConfigManager().getMessagePrefix() + hex("#FF5555") + "Teleport cancelled: " + reason);
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            }
+        }
+    }
+    
+    /**
+     * Execute the actual teleport
+     */
+    private void executeTeleport(Player player, Base base, Location destination, int cost) {
+        var config = plugin.getConfigManager();
+        
+        // Charge cost
+        if (cost > 0 && plugin.getEconomyIntegration() != null && plugin.getEconomyIntegration().isEnabled()) {
+            if (!plugin.getEconomyIntegration().withdraw(player, (int) cost)) {
+                player.sendMessage(config.getMessagePrefix() + hex("#FF5555") + "Transaction failed!");
+                return;
+            }
+        }
+        
+        // Teleport
+        player.teleport(destination);
+        teleportCooldowns.put(player.getUniqueId(), System.currentTimeMillis());
+        
+        player.sendMessage(config.getMessagePrefix() + hex("#55FF55") + "Teleported to your base!");
+        player.playSound(destination, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
+    }
+    
+    /**
+     * Find a safe Y coordinate
+     */
+    private int findSafeY(World world, int x, int startY, int z) {
+        for (int y = startY; y < world.getMaxHeight(); y++) {
+            if (world.getBlockAt(x, y, z).getType().isAir() && 
+                world.getBlockAt(x, y + 1, z).getType().isAir()) {
+                return y;
+            }
+        }
+        return startY;
+    }
+    
+    /**
+     * Handle player movement for teleport cancellation
+     */
+    @EventHandler
+    public void onPlayerMove(PlayerMoveEvent event) {
+        if (!plugin.getConfigManager().isTeleportCancelOnMove()) return;
+        
+        UUID uuid = event.getPlayer().getUniqueId();
+        TeleportTask task = pendingTeleports.get(uuid);
+        if (task == null || task.cancelled) return;
+        
+        Location from = task.startLocation;
+        Location to = event.getTo();
+        
+        // Check if actually moved (not just head rotation)
+        if (from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ()) {
+            cancelTeleport(uuid, "You moved!");
+        }
+    }
+    
+    /**
+     * Handle player damage for teleport cancellation
+     */
+    public void onPlayerDamage(Player player) {
+        if (!plugin.getConfigManager().isTeleportCancelOnDamage()) return;
+        
+        UUID uuid = player.getUniqueId();
+        TeleportTask task = pendingTeleports.get(uuid);
+        if (task != null && !task.cancelled) {
+            cancelTeleport(uuid, "You took damage!");
+        }
+    }
+    
     // ==================== INNER CLASSES ====================
     
     private enum MenuType {
-        MAIN, TRUST_LIST, TRUST_PERMS, STATS, SETTINGS
+        MAIN, TRUST_LIST, TRUST_PERMS, STATS, SETTINGS, BASE_SELECTOR
     }
     
     private static class MenuSession {
@@ -1031,6 +1501,24 @@ public class MenuManager implements Listener {
             this.trustEntry = trustEntry;
             this.page = page;
             this.data = data;
+        }
+    }
+    
+    private static class TeleportTask {
+        final Player player;
+        final Base base;
+        final Location destination;
+        final int cost;
+        final Location startLocation;
+        BukkitTask task;
+        boolean cancelled = false;
+        
+        TeleportTask(Player player, Base base, Location destination, int cost, Location startLocation) {
+            this.player = player;
+            this.base = base;
+            this.destination = destination;
+            this.cost = cost;
+            this.startLocation = startLocation;
         }
     }
 }

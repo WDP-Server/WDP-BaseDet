@@ -351,8 +351,9 @@ public class DetectionManager {
         plugin.getDatabaseManager().confirmBase(base.getId());
         base.setConfirmed(true);
         
-        // Clear score
+        // Clear score and reset score limits
         plugin.getScoreManager().clearScore(uuid);
+        plugin.getScoreManager().resetScoreLimits(uuid);
         
         // Give reward
         double reward = manual ? config.getConfirmReward() : config.getAutoConfirmReward();
@@ -363,12 +364,20 @@ public class DetectionManager {
                     ChatColor.GREEN + " for " + (manual ? "confirming" : "auto-confirming") + " your base!");
         }
         
-        // Send confirmation message
-        player.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + 
-                "Your base has been " + (manual ? "confirmed" : "auto-confirmed") + "!");
+        // Send confirmation message with size info
+        BoundingBox bounds = base.getBounds();
+        int volume = bounds.getWidth() * bounds.getLength() * bounds.getHeight();
+        
+        player.sendMessage("");
+        player.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + "✓ Base " + 
+                (manual ? "confirmed" : "auto-confirmed") + "!");
+        player.sendMessage(ChatColor.GRAY + "  Size: " + ChatColor.WHITE + 
+                bounds.getWidth() + "×" + bounds.getLength() + "×" + bounds.getHeight() + 
+                ChatColor.GRAY + " (" + ChatColor.GOLD + String.format("%,d", volume) + ChatColor.GRAY + " blocks)");
         player.sendMessage(ChatColor.GRAY + "  Your base is now protected when you're offline.");
         player.sendMessage(ChatColor.GRAY + "  Use " + ChatColor.WHITE + "/trust" + 
                 ChatColor.GRAY + " to manage trusted players.");
+        player.sendMessage("");
         
         // Cleanup
         cleanupPrompt(uuid);

@@ -38,6 +38,11 @@
             <id>cmi-repo</id>
             <url>https://github.com/Zrips/CMI-API/raw/master/</url>
         </repository>
+        <!-- PlaceholderAPI -->
+        <repository>
+            <id>placeholderapi</id>
+            <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -66,6 +71,14 @@
         </dependency>
 
         <!-- CMI integration uses reflection (no compile-time dependency needed) -->
+
+        <!-- PlaceholderAPI -->
+        <dependency>
+            <groupId>me.clip</groupId>
+            <artifactId>placeholderapi</artifactId>
+            <version>2.11.6</version>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- SQLite JDBC -->
         <dependency>

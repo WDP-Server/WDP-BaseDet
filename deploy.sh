@@ -124,7 +124,17 @@ fi
 # Safety wait for file handles to release
 sleep 2
 
-# Step 3: Backup existing plugin (if exists)
+# Step 3: Remove config file from plugins directory
+print_step "Removing config file from plugin directory..."
+CONFIG_FILE="${PLUGINS_DIR}/WDP-BaseDet/config.yml"
+if [ -f "$CONFIG_FILE" ]; then
+    rm -f "$CONFIG_FILE"
+    print_success "Config file removed: WDP-BaseDet/config.yml"
+else
+    print_warning "Config file not found (might be first deployment)"
+fi
+
+# Step 4: Backup existing plugin (if exists)
 if [ -f "${PLUGINS_DIR}/${JAR_NAME}" ]; then
     print_step "Backing up existing plugin..."
     BACKUP_NAME="${JAR_NAME}.backup.$(date +%Y%m%d_%H%M%S)"

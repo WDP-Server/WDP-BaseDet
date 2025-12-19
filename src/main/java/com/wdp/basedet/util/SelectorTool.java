@@ -581,6 +581,9 @@ public class SelectorTool implements Listener {
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.5f);
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1.0f, 1.2f);
         
+        // Remove selector tool from inventory
+        removeSelectorTool(player);
+        
         // Clean up
         cancelSelection(player);
     }
@@ -591,6 +594,20 @@ public class SelectorTool implements Listener {
     public void cancelSelection(Player player) {
         selectionStates.remove(player.getUniqueId());
         cancelVisualization(player.getUniqueId());
+        // Remove selector tool from inventory
+        removeSelectorTool(player);
+    }
+    
+    /**
+     * Remove selector tool from player's inventory
+     */
+    private void removeSelectorTool(Player player) {
+        for (int i = 0; i < player.getInventory().getSize(); i++) {
+            ItemStack item = player.getInventory().getItem(i);
+            if (isSelectorTool(item)) {
+                player.getInventory().setItem(i, null);
+            }
+        }
     }
     
     /**

@@ -28,6 +28,10 @@ public class ScoreManager {
     private final Map<UUID, Location> lastWalkLocation = new ConcurrentHashMap<>();
     private final Map<UUID, Double> walkDistance = new ConcurrentHashMap<>();
     
+    // Score limit tracking (bed/door counts per player)
+    private final Map<UUID, Integer> bedScoreCounts = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> doorScoreCounts = new ConcurrentHashMap<>();
+    
     public ScoreManager(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfigManager();
@@ -71,6 +75,41 @@ public class ScoreManager {
     public void addScore(Player player, PlayerInteraction interaction) {
         UUID uuid = player.getUniqueId();
         double baseScore = interaction.getScore();
+        
+        // Check score limits for beds and doors
+        if (baseScore > 0) {
+            String blockType = interaction.getBlockType();
+            if (blockType != null) {
+                // Check bed limit
+                if (blockType.contains("_BED")) {
+                    int bedLimit = config.getBedScoreLimit();
+                    int currentCount = bedScoreCounts.getOrDefault(uuid, 0);
+                    if (currentCount >= bedLimit) {
+                        if (config.isLogScoreChanges()) {
+                            plugin.debug(String.format("Score blocked (bed limit %d): %s tried to add bed score",
+                                    bedLimit, player.getName()));
+                        }
+                        return; // Skip scoring - limit reached
+                    }
+                    bedScoreCounts.put(uuid, currentCount + 1);
+                }
+                
+                // Check door limit
+                if (blockType.contains("_DOOR") || blockType.contains("_GATE") || blockType.contains("_TRAPDOOR")) {
+                    int doorLimit = config.getDoorScoreLimit();
+                    int currentCount = doorScoreCounts.getOrDefault(uuid, 0);
+                    if (currentCount >= doorLimit) {
+                        if (config.isLogScoreChanges()) {
+                            plugin.debug(String.format("Score blocked (door limit %d): %s tried to add door score",
+                                    doorLimit, player.getName()));
+                        }
+                        return; // Skip scoring - limit reached
+                    }
+                    doorScoreCounts.put(uuid, currentCount + 1);
+                }
+            }
+        }
+        
         double bonus = calculateProximityBonus(uuid, interaction);
         double totalScore = baseScore * bonus;
         
@@ -91,6 +130,14 @@ public class ScoreManager {
         if (newScore >= config.getDetectionThreshold()) {
             plugin.getDetectionManager().checkDetection(player);
         }
+    }
+    
+    /**
+     * Reset score limits for a player (called when they confirm/deny a base)
+     */
+    public void resetScoreLimits(UUID uuid) {
+        bedScoreCounts.remove(uuid);
+        doorScoreCounts.remove(uuid);
     }
     
     /**

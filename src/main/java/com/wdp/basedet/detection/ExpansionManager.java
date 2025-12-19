@@ -196,9 +196,22 @@ public class ExpansionManager {
                     ChatColor.GREEN + " for confirming the expansion!");
         }
         
-        player.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + 
-                "Base expanded! New size: " + newBounds.getWidth() + "x" + 
-                newBounds.getLength() + "x" + newBounds.getHeight());
+        // Show detailed size info
+        BoundingBox oldBounds = prompt.getBase().getBounds();
+        int oldVolume = oldBounds.getWidth() * oldBounds.getLength() * oldBounds.getHeight();
+        int newVolume = newBounds.getWidth() * newBounds.getLength() * newBounds.getHeight();
+        int addedVolume = newVolume - oldVolume;
+        
+        player.sendMessage("");
+        player.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + "✓ Base Expanded!");
+        player.sendMessage(ChatColor.GRAY + "  Old size: " + ChatColor.WHITE + 
+                oldBounds.getWidth() + "×" + oldBounds.getLength() + "×" + oldBounds.getHeight() + 
+                ChatColor.GRAY + " (" + ChatColor.GOLD + String.format("%,d", oldVolume) + ChatColor.GRAY + " blocks)");
+        player.sendMessage(ChatColor.GRAY + "  New size: " + ChatColor.GREEN + 
+                newBounds.getWidth() + "×" + newBounds.getLength() + "×" + newBounds.getHeight() + 
+                ChatColor.GRAY + " (" + ChatColor.GREEN + String.format("%,d", newVolume) + ChatColor.GRAY + " blocks)");
+        player.sendMessage(ChatColor.GRAY + "  Added: " + ChatColor.GREEN + "+" + String.format("%,d", addedVolume) + ChatColor.GRAY + " blocks");
+        player.sendMessage("");
         
         cleanupPrompt(uuid);
         return true;

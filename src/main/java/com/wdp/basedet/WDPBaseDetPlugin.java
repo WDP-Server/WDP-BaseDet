@@ -177,6 +177,14 @@ public class WDPBaseDetPlugin extends JavaPlugin {
                 getLogger().info("✓ Combat manager using CMI");
             }
         }
+        
+        // PlaceholderAPI
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new com.wdp.basedet.integration.BaseDetPlaceholders(this).register();
+            getLogger().info("✓ PlaceholderAPI integration enabled");
+        } else {
+            getLogger().info("○ PlaceholderAPI not found - placeholders disabled");
+        }
     }
     
     private void registerListeners() {
