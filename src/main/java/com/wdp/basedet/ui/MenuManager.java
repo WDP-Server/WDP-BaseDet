@@ -99,58 +99,64 @@ public class MenuManager implements Listener {
         
         // Base Settings (slot 22)
         inv.setItem(22, createMenuItem(
-                Material.COMPARATOR,
-                hex("#FFAA00") + "✦ Protection Settings",
+                Material.SHIELD,
+                hex("#FFAA00") + "✦ Protection Info",
                 Arrays.asList(
                         "",
-                        hex("#AAAAAA") + "Configure how your base",
-                        hex("#AAAAAA") + "protection works.",
+                        hex("#AAAAAA") + "View your base",
+                        hex("#AAAAAA") + "protection information.",
                         "",
-                        hex("#666666") + "Currently: " + hex("#55FF55") + "Protected",
+                        hex("#666666") + "Status: " + hex("#55FF55") + "Protected",
                         "",
-                        hex("#FFFF55") + "▸ Click to configure"
+                        hex("#FFFF55") + "▸ Click to view"
                 ),
                 false
         ));
         
-        // Selector Tool (slot 24)
-        inv.setItem(24, createMenuItem(
-                Material.BLAZE_ROD,
-                hex("#FF5555") + "✦ Modify Boundaries",
-                Arrays.asList(
-                        "",
-                        hex("#AAAAAA") + "Get the selector tool to",
-                        hex("#AAAAAA") + "adjust your base boundaries.",
-                        "",
-                        hex("#666666") + "Cost: " + hex("#FFD700") + 
-                                plugin.getConfigManager().getSelectorCostPerBlock() + " SkillCoins/block",
-                        "",
-                        hex("#FFFF55") + "▸ Click to get tool"
-                ),
-                false
-        ));
+        // Selector Tool (slot 24) - Only show if enabled
+        if (plugin.getConfigManager().isSelectorEnabled()) {
+            inv.setItem(24, createMenuItem(
+                    Material.BLAZE_ROD,
+                    hex("#FF5555") + "✦ Modify Boundaries",
+                    Arrays.asList(
+                            "",
+                            hex("#AAAAAA") + "Get the selector tool to",
+                            hex("#AAAAAA") + "adjust your base boundaries.",
+                            "",
+                            hex("#666666") + "Cost: " + hex("#FFD700") + 
+                                    plugin.getConfigManager().getSelectorCostPerBlock() + " SkillCoins/block",
+                            "",
+                            hex("#FFFF55") + "▸ Click to get tool"
+                    ),
+                    false
+            ));
+        }
         
         // ===== BOTTOM SECTION: Quick Actions =====
         
-        // View Particles (slot 29)
-        boolean viewing = plugin.getParticleManager().isViewing(player.getUniqueId());
-        inv.setItem(29, createMenuItem(
-                Material.END_ROD,
-                (viewing ? hex("#55FF55") : hex("#FF5555")) + "✦ Boundary Particles",
-                Arrays.asList(
-                        "",
-                        hex("#AAAAAA") + "Toggle particle visualization",
-                        hex("#AAAAAA") + "of your base boundaries.",
-                        "",
-                        hex("#666666") + "Status: " + (viewing ? hex("#55FF55") + "ON" : hex("#FF5555") + "OFF"),
-                        "",
-                        hex("#FFFF55") + "▸ Click to toggle"
-                ),
-                false
-        ));
+        // View Particles (slot 29) - Only show if particles are enabled
+        if (plugin.getConfigManager().areParticlesEnabled() && plugin.getConfigManager().isAllowParticleToggle()) {
+            boolean viewing = plugin.getParticleManager().isViewing(player.getUniqueId());
+            inv.setItem(29, createMenuItem(
+                    Material.END_ROD,
+                    (viewing ? hex("#55FF55") : hex("#FF5555")) + "✦ Boundary Particles",
+                    Arrays.asList(
+                            "",
+                            hex("#AAAAAA") + "Toggle particle visualization",
+                            hex("#AAAAAA") + "of your base boundaries.",
+                            "",
+                            hex("#666666") + "Status: " + (viewing ? hex("#55FF55") + "ON" : hex("#FF5555") + "OFF"),
+                            "",
+                            hex("#FFFF55") + "▸ Click to toggle"
+                    ),
+                    false
+            ));
+        }
         
-        // Teleport to Base (slot 30) - NEW!
-        inv.setItem(30, createTeleportItem(player, base));
+        // Teleport to Base (slot 30) - Only show if enabled
+        if (plugin.getConfigManager().isTeleportEnabled()) {
+            inv.setItem(30, createTeleportItem(player, base));
+        }
         
         // Base Stats (slot 31)
         inv.setItem(31, createMenuItem(
@@ -640,7 +646,7 @@ public class MenuManager implements Listener {
      * Open base settings menu
      */
     public void openSettingsMenu(Player player, Base base) {
-        String title = hex("#FFD700") + "✦ " + hex("#FFFFFF") + "Protection Settings";
+        String title = hex("#FFD700") + "✦ " + hex("#FFFFFF") + "Protection Info";
         Inventory inv = Bukkit.createInventory(null, 54, MENU_ID + title);
         
         // Fill background
@@ -648,50 +654,54 @@ public class MenuManager implements Listener {
         
         // Header
         inv.setItem(4, createMenuItem(
-                Material.COMPARATOR,
-                hex("#FFD700") + "✦ Protection Settings",
+                Material.SHIELD,
+                hex("#FFD700") + "✦ Protection Information",
                 Arrays.asList(
                         "",
-                        hex("#AAAAAA") + "Configure your base",
-                        hex("#AAAAAA") + "protection behavior."
+                        hex("#AAAAAA") + "View your base",
+                        hex("#AAAAAA") + "protection status."
                 ),
                 false
         ));
         
-        // Settings info
+        BoundingBox bounds = base.getBounds();
+        int volume = bounds.getWidth() * bounds.getLength() * bounds.getHeight();
+        List<TrustEntry> trusted = plugin.getDatabaseManager().getBaseTrusted(base.getId());
+        
+        // Protection status
         inv.setItem(20, createStatItem(
                 Material.SHIELD,
-                hex("#55FF55") + "Offline Protection",
+                hex("#55FF55") + "Protection Status",
                 Arrays.asList(
                         "",
-                        hex("#55FF55") + "✓ ACTIVE",
+                        base.isConfirmed() ? hex("#55FF55") + "✓ ACTIVE" : hex("#FF5555") + "✗ INACTIVE",
                         "",
-                        hex("#AAAAAA") + "Your base is protected",
-                        hex("#AAAAAA") + "when you're offline."
+                        hex("#AAAAAA") + "Your base is " + (base.isConfirmed() ? "protected" : "not confirmed"),
+                        hex("#AAAAAA") + (base.isConfirmed() ? "from unauthorized access." : "yet. Use /base confirm")
                 )
         ));
         
         inv.setItem(22, createStatItem(
-                Material.GOLDEN_SWORD,
-                hex("#FFAA00") + "Combat System",
+                Material.PLAYER_HEAD,
+                hex("#55FFFF") + "Trusted Players",
                 Arrays.asList(
                         "",
-                        hex("#55FF55") + "✓ ENABLED",
+                        hex("#FFD700") + String.valueOf(trusted.size()) + hex("#AAAAAA") + " trusted",
                         "",
-                        hex("#AAAAAA") + "Smart combat detection",
-                        hex("#AAAAAA") + "allows fights when tagged."
+                        hex("#AAAAAA") + "Players with access to",
+                        hex("#AAAAAA") + "your protected base."
                 )
         ));
         
         inv.setItem(24, createStatItem(
-                Material.BELL,
-                hex("#55FFFF") + "Discord Alerts",
+                Material.DIAMOND_BLOCK,
+                hex("#FFD700") + "Protected Volume",
                 Arrays.asList(
                         "",
-                        hex("#55FF55") + "✓ ENABLED",
+                        hex("#FFFFFF") + String.format("%,d", volume) + hex("#AAAAAA") + " blocks",
                         "",
-                        hex("#AAAAAA") + "Get DMs when players",
-                        hex("#AAAAAA") + "enter your base."
+                        hex("#AAAAAA") + "Size: " + hex("#55FF55") + bounds.getWidth() + "×" + 
+                                bounds.getLength() + "×" + bounds.getHeight()
                 )
         ));
         
@@ -701,10 +711,10 @@ public class MenuManager implements Listener {
                 hex("#666666") + "Note",
                 Arrays.asList(
                         "",
-                        hex("#AAAAAA") + "Global settings are configured",
-                        hex("#AAAAAA") + "in the server config.",
+                        hex("#AAAAAA") + "Protection rules are configured",
+                        hex("#AAAAAA") + "by server administrators.",
                         "",
-                        hex("#666666") + "Contact staff for changes."
+                        hex("#666666") + "Use Trust Manager to share access."
                 )
         ));
         
@@ -761,6 +771,10 @@ public class MenuManager implements Listener {
             case 24 -> { // Selector Tool
                 if (!plugin.getConfigManager().isSelectorEnabled()) {
                     player.sendMessage(plugin.getConfigManager().getMessagePrefix() + hex("#FF5555") + "Selector tool is disabled!");
+                    return;
+                }
+                if (!player.hasPermission("basedet.user.tool")) {
+                    player.sendMessage(plugin.getConfigManager().getMessagePrefix() + hex("#FF5555") + "You don't have permission to use the selector tool!");
                     return;
                 }
                 player.closeInventory();
@@ -867,9 +881,12 @@ public class MenuManager implements Listener {
             case 45 -> { // Back
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 0.8f);
                 switch (session.type) {
-                    case TRUST_LIST, STATS, SETTINGS -> openMainMenu(player, session.base);
+                    case TRUST_LIST -> openMainMenu(player, session.base);
+                    case STATS -> openMainMenu(player, session.base);
+                    case SETTINGS -> openMainMenu(player, session.base);
                     case TRUST_PERMS -> openTrustMenu(player, session.base);
-                    default -> player.closeInventory();
+                    case BASE_SELECTOR -> player.closeInventory();
+                    case MAIN -> player.closeInventory();
                 }
             }
             case 48 -> { // Previous page
@@ -1299,32 +1316,37 @@ public class MenuManager implements Listener {
         var config = plugin.getConfigManager();
         UUID uuid = player.getUniqueId();
         
+        // Check for bypass permission
+        boolean hasBypass = player.hasPermission("basedet.bypass.teleport") || player.hasPermission("basedet.admin.bypass");
+        
         // Final checks
         if (!config.isTeleportEnabled()) {
             player.sendMessage(config.getMessagePrefix() + hex("#FF5555") + "Teleportation is disabled!");
             return;
         }
         
-        // Combat check
-        if (config.isTeleportBlockedInCombat() && plugin.getCombatManager() != null && plugin.getCombatManager().isInCombat(player)) {
+        // Combat check (unless bypassed)
+        if (!hasBypass && config.isTeleportBlockedInCombat() && plugin.getCombatManager() != null && plugin.getCombatManager().isInCombat(player)) {
             player.sendMessage(config.getMessagePrefix() + hex("#FF5555") + "Cannot teleport while in combat!");
             return;
         }
         
-        // Cooldown check
-        Long lastTp = teleportCooldowns.get(uuid);
-        int cooldown = config.getTeleportCooldown();
-        if (lastTp != null) {
-            long elapsed = (System.currentTimeMillis() - lastTp) / 1000;
-            if (elapsed < cooldown) {
-                int remaining = (int) (cooldown - elapsed);
-                player.sendMessage(config.getMessagePrefix() + hex("#FFFF55") + "Teleport on cooldown! Wait " + remaining + "s");
-                return;
+        // Cooldown check (unless bypassed)
+        if (!hasBypass) {
+            Long lastTp = teleportCooldowns.get(uuid);
+            int cooldown = config.getTeleportCooldown();
+            if (lastTp != null) {
+                long elapsed = (System.currentTimeMillis() - lastTp) / 1000;
+                if (elapsed < cooldown) {
+                    int remaining = (int) (cooldown - elapsed);
+                    player.sendMessage(config.getMessagePrefix() + hex("#FFFF55") + "Teleport on cooldown! Wait " + remaining + "s");
+                    return;
+                }
             }
         }
         
-        // Economy check
-        double cost = config.getTeleportCost();
+        // Economy check (unless bypassed)
+        double cost = hasBypass ? 0 : config.getTeleportCost();
         if (cost > 0 && plugin.getEconomyIntegration() != null && plugin.getEconomyIntegration().isEnabled()) {
             if (!plugin.getEconomyIntegration().hasBalance(player, cost)) {
                 player.sendMessage(config.getMessagePrefix() + hex("#FF5555") + "Not enough SkillCoins! Need " + cost);
@@ -1347,7 +1369,7 @@ public class MenuManager implements Listener {
         int safeY = findSafeY(world, centerX, bounds.getMaxY(), centerZ);
         Location destination = new Location(world, centerX + 0.5, safeY, centerZ + 0.5, player.getLocation().getYaw(), player.getLocation().getPitch());
         
-        int delay = config.getTeleportDelay();
+        int delay = hasBypass ? 0 : config.getTeleportDelay();
         
         if (delay <= 0) {
             // Instant teleport

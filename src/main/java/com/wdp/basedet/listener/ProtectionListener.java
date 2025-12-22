@@ -44,6 +44,11 @@ public class ProtectionListener implements Listener {
         Player player = event.getPlayer();
         Block block = event.getBlock();
         
+        // Check for bypass permissions
+        if (player.hasPermission("basedet.bypass.break") || player.hasPermission("basedet.admin.bypass")) {
+            return;
+        }
+        
         // Check if player can break here
         if (!protectionManager.canBreak(player, block.getLocation())) {
             event.setCancelled(true);
@@ -55,6 +60,11 @@ public class ProtectionListener implements Listener {
     public void onBlockPlace(BlockPlaceEvent event) {
         Player player = event.getPlayer();
         Block block = event.getBlock();
+        
+        // Check for bypass permissions
+        if (player.hasPermission("basedet.bypass.place") || player.hasPermission("basedet.admin.bypass")) {
+            return;
+        }
         
         // Check if player can place here
         if (!protectionManager.canPlace(player, block.getLocation())) {
@@ -77,6 +87,28 @@ public class ProtectionListener implements Listener {
         String action = getInteractionType(material);
         if (action == null) {
             return; // Not a protected interaction
+        }
+        
+        // Check for general bypass permission
+        if (player.hasPermission("basedet.admin.bypass")) {
+            return;
+        }
+        
+        // Check for specific bypass permissions based on interaction type
+        if (action.equals("chest") && player.hasPermission("basedet.bypass.container")) {
+            return;
+        }
+        if (action.equals("interact")) {
+            // Check if it's a door/gate or redstone device
+            String name = material.name();
+            if ((name.contains("_DOOR") || name.contains("_TRAPDOOR") || name.contains("_GATE")) 
+                    && player.hasPermission("basedet.bypass.door")) {
+                return;
+            }
+            if ((name.contains("_BUTTON") || material == Material.LEVER) 
+                    && player.hasPermission("basedet.bypass.redstone")) {
+                return;
+            }
         }
         
         // Check if player can interact

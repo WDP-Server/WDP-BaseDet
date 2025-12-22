@@ -42,7 +42,58 @@ permissions:
     default: op
     
   basedet.admin.bypass:
-    description: Bypass base protection
+    description: Bypass all base protection
+    default: op
+    children:
+      basedet.bypass.break: true
+      basedet.bypass.place: true
+      basedet.bypass.container: true
+      basedet.bypass.door: true
+      basedet.bypass.redstone: true
+      basedet.bypass.entity: true
+      basedet.bypass.vehicle: true
+      basedet.bypass.decoration: true
+      basedet.bypass.combat: true
+      basedet.bypass.teleport: true
+      
+  basedet.bypass.break:
+    description: Bypass break block protection
+    default: op
+    
+  basedet.bypass.place:
+    description: Bypass place block protection
+    default: op
+    
+  basedet.bypass.container:
+    description: Bypass container protection
+    default: op
+    
+  basedet.bypass.door:
+    description: Bypass door/gate protection
+    default: op
+    
+  basedet.bypass.redstone:
+    description: Bypass redstone protection
+    default: op
+    
+  basedet.bypass.entity:
+    description: Bypass entity damage protection
+    default: op
+    
+  basedet.bypass.vehicle:
+    description: Bypass vehicle protection
+    default: op
+    
+  basedet.bypass.decoration:
+    description: Bypass decoration protection
+    default: op
+    
+  basedet.bypass.combat:
+    description: Bypass combat restrictions in bases
+    default: op
+    
+  basedet.bypass.teleport:
+    description: Bypass teleport cooldowns and restrictions
     default: op
     
   basedet.admin.view:
@@ -63,6 +114,7 @@ permissions:
       basedet.user.detect: true
       basedet.user.tool: true
       basedet.user.menu: true
+      basedet.user.teleport: true
       
   basedet.user.claim:
     description: Claim a detected base
@@ -86,4 +138,8 @@ permissions:
     
   basedet.user.menu:
     description: Open the base management menu
+    default: true
+  
+  basedet.user.teleport:
+    description: Teleport to your base
     default: true

@@ -76,6 +76,11 @@ public class CombatManager implements Listener {
     public boolean isInCombat(Player player) {
         if (!enabled) return false;
         
+        // Check for bypass permission
+        if (player.hasPermission("basedet.bypass.combat") || player.hasPermission("basedet.admin.bypass")) {
+            return false;
+        }
+        
         // Try CMI first if enabled
         if (useCMI && cmiIntegration != null && cmiIntegration.isEnabled()) {
             if (cmiIntegration.isInCombat(player)) {
