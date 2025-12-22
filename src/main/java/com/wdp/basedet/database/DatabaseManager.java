@@ -602,6 +602,51 @@ public class DatabaseManager {
         return bases;
     }
     
+    /**
+     * Get all bases (confirmed and pending)
+     * 
+     * @return List of all bases
+     */
+    public List<Base> getAllBases() {
+        List<Base> bases = new ArrayList<>();
+        String sql = "SELECT * FROM bases";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                bases.add(baseFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to get all bases", e);
+        }
+        return bases;
+    }
+    
+    /**
+     * Get all bases in a specific world (confirmed and pending)
+     * 
+     * @param worldName The world name
+     * @return List of bases in that world
+     */
+    public List<Base> getAllBases(String worldName) {
+        List<Base> bases = new ArrayList<>();
+        String sql = "SELECT * FROM bases WHERE world = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, worldName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    bases.add(baseFromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to get bases in world " + worldName, e);
+        }
+        return bases;
+    }
+    
     private Base baseFromResultSet(ResultSet rs) throws SQLException {
         BoundingBox bounds = new BoundingBox(
                 rs.getInt("min_x"),

@@ -6,6 +6,8 @@ import com.wdp.basedet.model.Base;
 import com.wdp.basedet.model.BoundingBox;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -14,6 +16,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages base detection logic and prompts
+ * 
+ * API Methods for external plugins:
+ * - isLocationNearBase(World, int x, int z, int distance) - Check if location is near any base
+ * - getAllBases() - Get all detected bases
+ * - getBasesInWorld(String worldName) - Get bases in a specific world
+ * - getNearbyBases(Location, int radius) - Get bases near a location
  */
 public class DetectionManager {
     
@@ -30,6 +38,174 @@ public class DetectionManager {
         this.plugin = plugin;
         this.config = plugin.getConfigManager();
     }
+    
+    // ==================== PUBLIC API METHODS ====================
+    
+    /**
+     * API: Check if a location is near any detected base
+     * Used by external plugins like WDP-Start for RTP safety checks
+     * 
+     * @param world The world to check in
+     * @param x X coordinate
+     * @param z Z coordinate
+     * @param minDistance Minimum distance from any base
+     * @return true if location is within minDistance of any base
+     */
+    public boolean isLocationNearBase(World world, int x, int z, int minDistance) {
+        if (world == null) return false;
+        
+        List<Base> bases = plugin.getDatabaseManager().getAllBases(world.getName());
+        if (bases == null || bases.isEmpty()) return false;
+        
+        for (Base base : bases) {
+            BoundingBox bounds = base.getBounds();
+            if (bounds == null) continue;
+            
+            // Calculate distance from point to bounding box
+            int dx = Math.max(0, Math.max(bounds.getMinX() - x, x - bounds.getMaxX()));
+            int dz = Math.max(0, Math.max(bounds.getMinZ() - z, z - bounds.getMaxZ()));
+            double distance = Math.sqrt(dx * dx + dz * dz);
+            
+            if (distance < minDistance) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * API: Get all detected bases
+     * 
+     * @return List of all bases
+     */
+    public List<Base> getAllBases() {
+        return plugin.getDatabaseManager().getAllBases();
+    }
+    
+    /**
+     * API: Get all bases in a specific world
+     * 
+     * @param worldName The world name
+     * @return List of bases in that world
+     */
+    public List<Base> getBasesInWorld(String worldName) {
+        return plugin.getDatabaseManager().getAllBases(worldName);
+    }
+    
+    /**
+     * API: Get bases near a specific location
+     * 
+     * @param location Center location
+     * @param radius Search radius
+     * @return List of bases within radius
+     */
+    public List<Base> getNearbyBases(Location location, int radius) {
+        if (location == null || location.getWorld() == null) {
+            return Collections.emptyList();
+        }
+        
+        List<Base> allBases = plugin.getDatabaseManager().getAllBases(location.getWorld().getName());
+        if (allBases == null || allBases.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        List<Base> nearby = new ArrayList<>();
+        int x = location.getBlockX();
+        int z = location.getBlockZ();
+        
+        for (Base base : allBases) {
+            BoundingBox bounds = base.getBounds();
+            if (bounds == null) continue;
+            
+            // Calculate distance from point to bounding box center
+            int centerX = (bounds.getMinX() + bounds.getMaxX()) / 2;
+            int centerZ = (bounds.getMinZ() + bounds.getMaxZ()) / 2;
+            double distance = Math.sqrt(Math.pow(centerX - x, 2) + Math.pow(centerZ - z, 2));
+            
+            if (distance <= radius) {
+                nearby.add(base);
+            }
+        }
+        
+        return nearby;
+    }
+    
+    /**
+     * API: Get the closest base to a location
+     * 
+     * @param location The location to check from
+     * @return The closest base, or null if no bases exist
+     */
+    public Base getClosestBase(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return null;
+        }
+        
+        List<Base> allBases = plugin.getDatabaseManager().getAllBases(location.getWorld().getName());
+        if (allBases == null || allBases.isEmpty()) {
+            return null;
+        }
+        
+        Base closest = null;
+        double closestDistance = Double.MAX_VALUE;
+        int x = location.getBlockX();
+        int z = location.getBlockZ();
+        
+        for (Base base : allBases) {
+            BoundingBox bounds = base.getBounds();
+            if (bounds == null) continue;
+            
+            int dx = Math.max(0, Math.max(bounds.getMinX() - x, x - bounds.getMaxX()));
+            int dz = Math.max(0, Math.max(bounds.getMinZ() - z, z - bounds.getMaxZ()));
+            double distance = Math.sqrt(dx * dx + dz * dz);
+            
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closest = base;
+            }
+        }
+        
+        return closest;
+    }
+    
+    /**
+     * API: Get distance to the nearest base
+     * 
+     * @param location The location to check from
+     * @return Distance in blocks, or -1 if no bases exist
+     */
+    public double getDistanceToNearestBase(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return -1;
+        }
+        
+        List<Base> allBases = plugin.getDatabaseManager().getAllBases(location.getWorld().getName());
+        if (allBases == null || allBases.isEmpty()) {
+            return -1;
+        }
+        
+        double closestDistance = Double.MAX_VALUE;
+        int x = location.getBlockX();
+        int z = location.getBlockZ();
+        
+        for (Base base : allBases) {
+            BoundingBox bounds = base.getBounds();
+            if (bounds == null) continue;
+            
+            int dx = Math.max(0, Math.max(bounds.getMinX() - x, x - bounds.getMaxX()));
+            int dz = Math.max(0, Math.max(bounds.getMinZ() - z, z - bounds.getMaxZ()));
+            double distance = Math.sqrt(dx * dx + dz * dz);
+            
+            if (distance < closestDistance) {
+                closestDistance = distance;
+            }
+        }
+        
+        return closestDistance == Double.MAX_VALUE ? -1 : closestDistance;
+    }
+    
+    // ==================== INTERNAL METHODS ====================
     
     /**
      * Check if a player has reached detection threshold
