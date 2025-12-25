@@ -42,6 +42,14 @@
                   <pattern>com.google.gson</pattern>
                   <shadedPattern>com.wdp.basedet.libs.gson</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>dev.aurelium.slate</pattern>
+                  <shadedPattern>com.wdp.basedet.libs.slate</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.spongepowered.configurate</pattern>
+                  <shadedPattern>com.wdp.basedet.libs.configurate</shadedPattern>
+                </relocation>
               </relocations>
               <filters>
                 <filter>
@@ -79,6 +87,10 @@
     <repository>
       <id>placeholderapi</id>
       <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+    </repository>
+    <repository>
+      <id>aurelium-repo</id>
+      <url>https://repo.aurelium.dev/releases</url>
     </repository>
   </repositories>
   <dependencies>

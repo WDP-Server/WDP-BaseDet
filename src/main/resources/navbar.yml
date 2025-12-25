@@ -1,0 +1,72 @@
+# Unified Navbar Configuration for WDP Plugins
+# This file defines the bottom row (slots 45-53) for all menus
+# Layout: [Back] [Glass] [Glass] [Prev] [Page] [Next] [Glass] [Glass] [Close]
+
+navbar:
+  back:
+    slot: 45
+    material: arrow
+    display_name: '§e§l← Back'
+    lore:
+      - '§7Return to previous menu'
+  
+  glass_left_1:
+    slot: 46
+    material: black_stained_glass_pane
+    display_name: ' '
+  
+  glass_left_2:
+    slot: 47
+    material: black_stained_glass_pane
+    display_name: ' '
+  
+  previous_page:
+    slot: 48
+    material: arrow
+    display_name: '§e§l← Previous'
+    lore:
+      - '§7Go to previous page'
+  
+  page_info:
+    slot: 49
+    material: paper
+    display_name: '§b§lPage {page}/{total_pages}'
+    lore:
+      - ''
+      - '§7Current page: {page}'
+      - '§7Total pages: {total_pages}'
+      - ''
+  
+  next_page:
+    slot: 50
+    material: arrow
+    display_name: '§e§lNext →'
+    lore:
+      - '§7Go to next page'
+  
+  glass_right_1:
+    slot: 51
+    material: black_stained_glass_pane
+    display_name: ' '
+  
+  glass_right_2:
+    slot: 52
+    material: black_stained_glass_pane
+    display_name: ' '
+  
+  close:
+    slot: 53
+    material: barrier
+    display_name: '§c§l✗ Close'
+    lore:
+      - '§7Close this menu'
+
+# Exceptions for menus that should only show back button
+exceptions:
+  skill_selection:
+    - skills
+    - skill_select
+    - skill_abilities
+    - skill_sources
+    - skill_stats
+    - stat_info

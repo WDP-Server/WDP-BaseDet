@@ -43,6 +43,11 @@
             <id>placeholderapi</id>
             <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
         </repository>
+        <!-- Slate framework repository -->
+        <repository>
+            <id>aurelium-repo</id>
+            <url>https://repo.aurelium.dev/releases</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -107,6 +112,13 @@
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
         </dependency>
+
+        <!-- Slate framework for menu system -->
+        <dependency>
+            <groupId>dev.aurelium</groupId>
+            <artifactId>slate</artifactId>
+            <version>1.2.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -150,6 +162,14 @@
                                 <relocation>
                                     <pattern>com.google.gson</pattern>
                                     <shadedPattern>com.wdp.basedet.libs.gson</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>dev.aurelium.slate</pattern>
+                                    <shadedPattern>com.wdp.basedet.libs.slate</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.spongepowered.configurate</pattern>
+                                    <shadedPattern>com.wdp.basedet.libs.configurate</shadedPattern>
                                 </relocation>
                             </relocations>
                             <filters>

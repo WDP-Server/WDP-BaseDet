@@ -4,6 +4,7 @@ import com.wdp.basedet.WDPBaseDetPlugin;
 import com.wdp.basedet.model.Base;
 import com.wdp.basedet.model.BoundingBox;
 import com.wdp.basedet.model.TrustEntry;
+import com.wdp.basedet.ui.menu.UnifiedMenuManager;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -43,6 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MenuManager implements Listener {
     
     private final WDPBaseDetPlugin plugin;
+    private final UnifiedMenuManager unifiedMenuManager;
     
     // Track open menus
     private final Map<UUID, MenuSession> openMenus = new ConcurrentHashMap<>();
@@ -58,6 +60,7 @@ public class MenuManager implements Listener {
     
     public MenuManager(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
+        this.unifiedMenuManager = new UnifiedMenuManager(plugin);
     }
     
     // ==================== MAIN BASE MENU ====================
@@ -877,8 +880,11 @@ public class MenuManager implements Listener {
     }
     
     private void handleNavbarClick(Player player, MenuSession session, int slot, boolean shift) {
-        switch (slot) {
-            case 45 -> { // Back
+        // Use unified navbar action system
+        UnifiedMenuManager.NavbarAction action = unifiedMenuManager.getNavbarAction(slot);
+
+        switch (action) {
+            case BACK:
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 0.8f);
                 switch (session.type) {
                     case TRUST_LIST -> openMainMenu(player, session.base);
@@ -888,32 +894,27 @@ public class MenuManager implements Listener {
                     case BASE_SELECTOR -> player.closeInventory();
                     case MAIN -> player.closeInventory();
                 }
-            }
-            case 48 -> { // Previous page
+                break;
+            case PREVIOUS_PAGE:
                 if (session.type == MenuType.TRUST_PERMS && session.page > 1) {
                     player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
                     openPermissionsMenu(player, session.base, session.trustEntry, session.page - 1);
                 }
-            }
-            case 49 -> { // Remove trust (perms menu only)
-                if (session.type == MenuType.TRUST_PERMS && session.trustEntry != null) {
-                    plugin.getDatabaseManager().removeTrust(session.base.getId(), session.trustEntry.getTrustedUUID());
-                    String name = plugin.getTrustManager().getPlayerName(session.trustEntry.getTrustedUUID());
-                    player.sendMessage(plugin.getConfigManager().getMessage("trusted-removed").replace("{player}", name));
-                    player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 0.7f, 0.8f);
-                    openTrustMenu(player, session.base);
-                }
-            }
-            case 50 -> { // Next page
+                break;
+            case NEXT_PAGE:
                 if (session.type == MenuType.TRUST_PERMS && session.page < 2) {
                     player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
                     openPermissionsMenu(player, session.base, session.trustEntry, session.page + 1);
                 }
-            }
-            case 53 -> { // Close
+                break;
+            case CLOSE:
                 player.playSound(player.getLocation(), Sound.BLOCK_CHEST_CLOSE, 0.5f, 1.0f);
                 player.closeInventory();
-            }
+                break;
+            case NONE:
+            default:
+                // Not a navbar action
+                break;
         }
     }
     
@@ -1029,81 +1030,40 @@ public class MenuManager implements Listener {
     }
     
     private void addMainNavbar(Inventory inv, String current) {
-        // Home (slot 45)
-        ItemStack home = createNavItem(Material.NETHER_STAR, hex("#55FFFF") + "⌂ Home", "Main base menu");
-        inv.setItem(45, home);
+        // Use unified navbar system with plugin-specific context
+        Map<String, Object> context = new HashMap<>();
+        context.put("menu_name", "WDP-BaseDet");
+        context.put("menu_description", "Automatic base detection and protection system");
+        context.put("page", 1);
+        context.put("total_pages", 1);
         
-        // Empty decorations
-        ItemStack deco = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta decoMeta = deco.getItemMeta();
-        decoMeta.setDisplayName(" ");
-        deco.setItemMeta(decoMeta);
-        inv.setItem(46, deco);
-        inv.setItem(47, deco);
-        inv.setItem(48, deco);
-        inv.setItem(50, deco);
-        inv.setItem(51, deco);
-        inv.setItem(52, deco);
-        
-        // Info (center, slot 49)
-        ItemStack info = new ItemStack(Material.PAPER);
-        ItemMeta infoMeta = info.getItemMeta();
-        infoMeta.setDisplayName(hex("#FFD700") + "WDP-BaseDet");
-        List<String> infoLore = new ArrayList<>();
-        infoLore.add("");
-        infoLore.add(hex("#AAAAAA") + "Automatic base detection");
-        infoLore.add(hex("#AAAAAA") + "and protection system.");
-        infoMeta.setLore(infoLore);
-        info.setItemMeta(infoMeta);
-        inv.setItem(49, info);
-        
-        // Close (slot 53)
-        ItemStack close = createNavItem(Material.BARRIER, hex("#FF5555") + "✗ Close", "Close this menu");
-        inv.setItem(53, close);
+        unifiedMenuManager.applyNavbar(inv, null, "main", context);
     }
     
     private void addSubNavbar(Inventory inv, String current) {
-        // Back (slot 45)
-        ItemStack back = createNavItem(Material.ARROW, hex("#FFFF55") + "← Back", "Return to previous menu");
-        inv.setItem(45, back);
+        // Use unified navbar system
+        Map<String, Object> context = new HashMap<>();
+        context.put("menu_name", "Base Management");
+        context.put("menu_description", "Submenu for base operations");
+        context.put("page", 1);
+        context.put("total_pages", 1);
+        context.put("previous_menu", "main");
         
-        // Empty decorations
-        ItemStack deco = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta decoMeta = deco.getItemMeta();
-        decoMeta.setDisplayName(" ");
-        deco.setItemMeta(decoMeta);
-        for (int i = 46; i <= 52; i++) {
-            inv.setItem(i, deco);
-        }
-        
-        // Close (slot 53)
-        ItemStack close = createNavItem(Material.BARRIER, hex("#FF5555") + "✗ Close", "Close this menu");
-        inv.setItem(53, close);
+        unifiedMenuManager.applyNavbar(inv, null, "sub", context);
     }
     
     private void addPermissionsNavbar(Inventory inv, int page, String playerName) {
-        // Back (slot 45)
-        ItemStack back = createNavItem(Material.ARROW, hex("#FFFF55") + "← Back to Trust List", "Return to trusted players");
-        inv.setItem(45, back);
+        // Use unified navbar system
+        Map<String, Object> context = new HashMap<>();
+        context.put("menu_name", "Trust Permissions");
+        context.put("menu_description", "Editing permissions for " + playerName);
+        context.put("page", page);
+        context.put("total_pages", 2);
+        context.put("previous_menu", "trust_list");
         
-        // Decorations
-        ItemStack deco = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta decoMeta = deco.getItemMeta();
-        decoMeta.setDisplayName(" ");
-        deco.setItemMeta(decoMeta);
-        inv.setItem(46, deco);
-        inv.setItem(47, deco);
-        inv.setItem(51, deco);
-        inv.setItem(52, deco);
+        unifiedMenuManager.applyNavbar(inv, null, "permissions", context);
         
-        // Previous page (slot 48)
-        if (page > 1) {
-            inv.setItem(48, createNavItem(Material.SPECTRAL_ARROW, hex("#55FFFF") + "← Page 1", "Basic permissions"));
-        } else {
-            inv.setItem(48, deco);
-        }
-        
-        // Remove button (slot 49)
+        // Override slot 49 with remove button (this is specific to permissions menu)
         ItemStack remove = new ItemStack(Material.LAVA_BUCKET);
         ItemMeta removeMeta = remove.getItemMeta();
         removeMeta.setDisplayName(hex("#FF5555") + "✗ Remove " + playerName);
@@ -1116,17 +1076,6 @@ public class MenuManager implements Listener {
         removeMeta.setLore(removeLore);
         remove.setItemMeta(removeMeta);
         inv.setItem(49, remove);
-        
-        // Next page (slot 50)
-        if (page < 2) {
-            inv.setItem(50, createNavItem(Material.SPECTRAL_ARROW, hex("#55FFFF") + "Page 2 →", "Advanced permissions"));
-        } else {
-            inv.setItem(50, deco);
-        }
-        
-        // Close (slot 53)
-        ItemStack close = createNavItem(Material.BARRIER, hex("#FF5555") + "✗ Close", "Close this menu");
-        inv.setItem(53, close);
     }
     
     private ItemStack createNavItem(Material mat, String name, String description) {
