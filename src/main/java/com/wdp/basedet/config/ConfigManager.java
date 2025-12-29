@@ -4,7 +4,7 @@ import com.wdp.basedet.WDPBaseDetPlugin;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.configuration.ConfigurationSection;
+
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.HashSet;

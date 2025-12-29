@@ -1,7 +1,6 @@
 package com.wdp.basedet.ui.menu;
 
 import com.wdp.basedet.WDPBaseDetPlugin;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
