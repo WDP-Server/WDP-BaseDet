@@ -42,9 +42,9 @@ public class GlobalItems {
      * The previous menu name should be stored in the menu session
      */
     public ItemStack createBackItem(String menuName) {
-        ItemStack item = new ItemStack(Material.ARROW);
+        ItemStack item = new ItemStack(Material.SPYGLASS);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName("§e§l← Back");
+        meta.setDisplayName("§c§l← Back");
         List<String> lore = new ArrayList<>();
         lore.add("");
         lore.add("§7Return to " + formatMenuName(menuName));
@@ -58,9 +58,9 @@ public class GlobalItems {
      * Creates a back button for returning to main menu
      */
     public ItemStack createBackToMainItem() {
-        ItemStack item = new ItemStack(Material.ARROW);
+        ItemStack item = new ItemStack(Material.SPYGLASS);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName("§a§l← Back to Main");
+        meta.setDisplayName("§c§l← Back§7 to Main");
         List<String> lore = new ArrayList<>();
         lore.add("");
         lore.add("§7Return to main menu");
@@ -76,7 +76,7 @@ public class GlobalItems {
     public ItemStack createPreviousPageItem(int currentPage) {
         ItemStack item = new ItemStack(Material.ARROW);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName("§e§l← Previous Page");
+        meta.setDisplayName("§e§l← Previous");
         List<String> lore = new ArrayList<>();
         lore.add("");
         lore.add("§7Go to page " + (currentPage - 1));
@@ -92,7 +92,7 @@ public class GlobalItems {
     public ItemStack createNextPageItem(int currentPage, int totalPages) {
         ItemStack item = new ItemStack(Material.ARROW);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName("§e§lNext Page →");
+        meta.setDisplayName("§e§lNext →");
         List<String> lore = new ArrayList<>();
         lore.add("");
         lore.add("§7Go to page " + (currentPage + 1) + "/" + totalPages);
