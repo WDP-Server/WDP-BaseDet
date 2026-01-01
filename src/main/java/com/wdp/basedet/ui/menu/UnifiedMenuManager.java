@@ -440,6 +440,17 @@ public class UnifiedMenuManager {
     }
 
     /**
+     * Get the navbar action for a specific slot (without context)
+     * For slot 53, defaults to CLOSE since no previous_menu context is provided
+     * 
+     * @param slot The slot number (45-53)
+     * @return The NavbarAction for this slot
+     */
+    public NavbarAction getNavbarAction(int slot) {
+        return getNavbarAction(slot, null);
+    }
+
+    /**
      * Get the navbar action for a specific slot
      * This provides universal slot-based action determination
      * 
