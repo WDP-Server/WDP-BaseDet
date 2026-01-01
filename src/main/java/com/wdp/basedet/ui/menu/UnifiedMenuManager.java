@@ -243,7 +243,7 @@ public class UnifiedMenuManager {
             } else if ("no_balance".equals(exceptionType)) {
                 // Hide balance, show everything else normally
                 // Re-apply navbar but skip balance
-                applyNavbarWithoutBalance(inv, config, menuType, context);
+                applyNavbarWithoutBalance(inv, config, context);
             }
             break;
         }
@@ -252,7 +252,7 @@ public class UnifiedMenuManager {
     /**
      * Apply navbar without balance display
      */
-    private void applyNavbarWithoutBalance(Inventory inv, FileConfiguration config, String menuType, Map<String, Object> context) {
+    private void applyNavbarWithoutBalance(Inventory inv, FileConfiguration config, Map<String, Object> context) {
         ConfigurationSection navbarSection = config.getConfigurationSection("navbar");
         if (navbarSection == null) return;
 
