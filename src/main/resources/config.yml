@@ -133,10 +133,10 @@ prompt:
   auto-confirm-time: 600
   # Pause timer when player leaves
   pause-on-leave: true
-  # Reward for manual confirmation (SkillCoins)
-  confirm-reward: 50
-  # Reward for manual denial (SkillCoins)
-  deny-reward: 50
+  # Reward for manual confirmation (SkillCoins) - small bonus for engagement
+  confirm-reward: 25
+  # Reward for manual denial (SkillCoins) - thanks for honesty
+  deny-reward: 15
   # No reward for auto-confirm
   auto-confirm-reward: 0
 
@@ -240,8 +240,8 @@ selector:
 teleport:
   # Enable teleport to base feature
   enabled: true
-  # Cost to teleport (SkillCoins)
-  cost: 100
+  # Cost to teleport (SkillCoins) - meaningful cost but affordable
+  cost: 50
   # Cooldown between teleports (seconds)
   cooldown: 300
   # Delay before teleporting (seconds, 0 = instant)
