@@ -1,6 +1,7 @@
 package com.wdp.basedet.config;
 
 import com.wdp.basedet.WDPBaseDetPlugin;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -189,45 +190,45 @@ public class MessageManager {
     // ==================== SEND METHODS ====================
     
     /**
-     * Send a prefixed message to a player
+     * Send a prefixed message to a command sender
      */
-    public void send(Player player, String path) {
-        player.sendMessage(getPrefix() + get(path));
+    public void send(CommandSender sender, String path) {
+        sender.sendMessage(getPrefix() + get(path));
     }
     
     /**
      * Send a prefixed message with placeholders
      */
-    public void send(Player player, String path, String... placeholders) {
-        player.sendMessage(getPrefix() + get(path, placeholders));
+    public void send(CommandSender sender, String path, String... placeholders) {
+        sender.sendMessage(getPrefix() + get(path, placeholders));
     }
     
     /**
      * Send a raw message (no prefix)
      */
-    public void sendRaw(Player player, String path) {
-        player.sendMessage(get(path));
+    public void sendRaw(CommandSender sender, String path) {
+        sender.sendMessage(get(path));
     }
     
     /**
      * Send a raw message with placeholders (no prefix)
      */
-    public void sendRaw(Player player, String path, String... placeholders) {
-        player.sendMessage(get(path, placeholders));
+    public void sendRaw(CommandSender sender, String path, String... placeholders) {
+        sender.sendMessage(get(path, placeholders));
     }
     
     /**
      * Send a list of messages (no prefix)
      */
-    public void sendList(Player player, String path) {
-        getList(path).forEach(player::sendMessage);
+    public void sendList(CommandSender sender, String path) {
+        getList(path).forEach(sender::sendMessage);
     }
     
     /**
      * Send a list of messages with placeholders (no prefix)
      */
-    public void sendList(Player player, String path, String... placeholders) {
-        getList(path, placeholders).forEach(player::sendMessage);
+    public void sendList(CommandSender sender, String path, String... placeholders) {
+        getList(path, placeholders).forEach(sender::sendMessage);
     }
     
     /**
