@@ -1,0 +1,768 @@
+# ===========================================
+# WDP-BaseDet Messages Configuration
+# ===========================================
+# Supports hex colors: &#RRGGBB
+# Supports legacy colors: &a, &b, etc.
+# Placeholders use: {key} format
+
+prefix: "&8[&6BaseDet&8] &r"
+
+# ===========================================
+# COMMAND MESSAGES
+# ===========================================
+commands:
+  # Console/player-only messages
+  players-only: "&cThis command can only be used by players!"
+  
+  # Unknown command
+  unknown-command: "&cUnknown command. Use /base help"
+  
+  # Permission denied
+  no-permission: "&cYou don't have permission to do that!"
+  
+  # Player not found
+  player-not-found: "&cPlayer not found: {player}"
+  
+  # No base
+  no-base: "&cYou don't have a detected base yet!"
+  no-confirmed-base: "&cYou don't have a confirmed base yet!"
+  no-base-in-world: "&cYou don't have a confirmed base in this world!"
+  
+  # View command
+  view-enabled: "&aBase visualization enabled. You can now see your base boundaries."
+  view-disabled: "&eBase visualization disabled."
+  no-bases-yet: "&7You don't have any confirmed bases yet."
+  your-bases: "&bYour bases ({count}):"
+  base-list-item: "&7  {number}. &f{location} &7({size})"
+  
+  # Detect command
+  not-enough-activity: "&eNot enough activity detected yet. Keep building!"
+  current-score: "&7  Current score: &f{score} &7/ {threshold}"
+  analyzing-activity: "&bAnalyzing your activity..."
+  not-enough-for-detection: "&cNot enough activity detected to determine a base location."
+  
+  # Score command
+  detection-score-for: "&bDetection Score for {player}:"
+  score-display: "&7  Score: &f{score} &7/ {threshold}"
+  progress-display: "&7  Progress: {bar} &f{percentage}%"
+  
+  # Tool command
+  selector-disabled: "&cThe selector tool is currently disabled!"
+  
+  # Expand command
+  expand-usage: "&cUsage: /base expand <confirm|deny>"
+  
+  # Reload command
+  config-reloaded: "&aConfiguration reloaded!"
+  
+  # Force command
+  force-usage: "&cUsage: /base force <player>"
+  force-triggered: "&aForced detection for {player}"
+  
+  # Info command
+  info-usage: "&cUsage: /base info <player>"
+  player-info: "&bPlayer Info: {player}"
+  
+  # Delete command
+  delete-usage: "&cUsage: /base delete <player>"
+  bases-deleted: "&aDeleted {count} bases for {player}"
+  
+  # Debug command
+  debug-info: "&eDebug info:"
+  debug-database: "&7  Database: {type}"
+  debug-economy: "&7  Economy: {status}"
+  debug-discord: "&7  DiscordSRV: {status}"
+  debug-cmi: "&7  CMI: {status}"
+  
+  # List command
+  all-bases-header: "&bAll Protected Bases ({count}):"
+  all-bases-item: "&7  - &f{owner}&7: {location}"
+
+# ===========================================
+# HELP MENU
+# ===========================================
+help:
+  header: "&6━━━ &bWDP-BaseDet Help &6━━━"
+  user-commands-header: "&eUser Commands:"
+  admin-commands-header: "&cAdmin Commands:"
+  
+  # User commands
+  menu: "&f  /base menu &7- Open base management menu"
+  confirm: "&f  /base confirm &7- Confirm a detected base"
+  deny: "&f  /base deny &7- Deny a detected base"
+  view: "&f  /base view &7- Toggle base visualization"
+  detect: "&f  /base detect &7- Manually trigger detection"
+  score: "&f  /base score &7- View your detection score"
+  tool: "&f  /base tool &7- Get base selector tool"
+  trust: "&f  /trust &7- Manage trusted players"
+  
+  # Admin commands
+  reload: "&f  /base reload &7- Reload configuration"
+  debug: "&f  /base debug &7- View debug info"
+  force: "&f  /base force <player> &7- Force detection"
+  info: "&f  /base info <player> &7- View player info"
+  list: "&f  /base list &7- List all bases"
+  delete: "&f  /base delete <player> &7- Delete player's bases"
+
+# ===========================================
+# DETECTION MESSAGES
+# ===========================================
+detection:
+  # Detection prompt
+  base-detected: "&a⬢ Base Detected!"
+  location-info: "&7  Location: &f{location}"
+  size-info: "&7  Size: &f{size} blocks"
+  auto-confirm-timer: "&7  Auto-confirms in {minutes} minutes"
+  auto-confirm-warning: "&eBase will auto-confirm in {time}"
+  
+  # No pending detection
+  no-pending-detection: "&cYou don't have a pending base detection!"
+  
+  # Confirm messages
+  base-confirmed: "&a✓ Base {type}!"
+  base-confirmed-manual: "confirmed"
+  base-confirmed-auto: "auto-confirmed"
+  size-confirmed: "&7  Size: &f{dimensions} &7(&6{volume} &7blocks)"
+  protection-info: "&7  Your base is now protected when you're offline."
+  trust-info: "&7  Use &f/trust &7to manage trusted players."
+  
+  # Reward messages
+  reward-confirm: "&aYou received &6{amount} SkillCoins &afor confirming your base!"
+  reward-auto-confirm: "&aYou received &6{amount} SkillCoins &afor auto-confirming your base!"
+  reward-deny: "&aYou received &6{amount} SkillCoins &afor responding to the detection prompt."
+  
+  # Deny message
+  base-denied: "&eBase detection cancelled. Keep building!"
+  
+  # Pending detection reminder (on join)
+  pending-detection-reminder: "&eYou have a pending base detection! Use &f/basedet confirm &eor &f/basedet deny"
+  
+  # Too close to existing base
+  too-close-to-base: "&eThis location is too close to one of your existing bases."
+  
+  # Old base abandoned
+  old-base-abandoned: "&eYour oldest base has been abandoned to make room for this one."
+
+# ===========================================
+# EXPANSION MESSAGES
+# ===========================================
+expansion:
+  # Expansion detected
+  expansion-detected: "&e⬢ Base Expansion Detected!"
+  blocks-grown: "&7  Your base has grown by &f{count} blocks"
+  new-size: "&7  New size: &f{dimensions}"
+  
+  # Confirm expansion
+  expansion-confirmed: "&a✓ Base Expanded!"
+  old-size: "&7  Old size: &f{dimensions} &7(&6{volume} &7blocks)"
+  new-size-detailed: "&7  New size: &a{dimensions} &7(&a{volume} &7blocks)"
+  blocks-added: "&7  Added: &a+{count} &7blocks"
+  expansion-reward: "&aYou received &6{amount} SkillCoins &afor confirming the expansion!"
+  
+  # Deny expansion
+  expansion-denied: "&eExpansion cancelled. Your base size remains unchanged."
+  
+  # No pending expansion
+  no-pending-expansion: "&cNo pending expansion to confirm."
+  no-expansion-to-deny: "&cNo pending expansion to deny."
+
+# ===========================================
+# TRUST MESSAGES
+# ===========================================
+trust:
+  # Command usage
+  add-usage: "&cUsage: /trust add <player>"
+  remove-usage: "&cUsage: /trust remove <player>"
+  
+  # Add/remove
+  trusted-added: "&a{player} is now trusted in your base!"
+  trusted-removed: "&c{player} is no longer trusted in your base."
+  trusted-by-notification: "&aYou have been trusted by {owner}!"
+  cant-trust-yourself: "&cYou can't trust yourself!"
+  
+  # List command
+  trusted-players-header: "&bTrusted Players:"
+  base-at-location: "&7  Base at {location}:"
+  player-entry: "&f    - {name}"
+  permissions-display: "&7      {permissions}"
+  online-label: "&aOnline: "
+  offline-label: "&e | Offline: "
+  no-trusted-players: "&7  No trusted players yet."
+  use-trust-command: "&7  Use &f/trust <player> &7to add someone."
+  
+  # Menu prompt
+  add-player-prompt-header: "&6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  add-player-prompt: "&b  Type the player name in chat:"
+  add-player-hint: "&7  Or use: &e/trust <name>"
+
+# ===========================================
+# MENU TITLES
+# ===========================================
+menu:
+  titles:
+    base-management: "&#FFD700✦ &fBase Management"
+    select-base: "&#FFD700✦ &fSelect a Base"
+    trust-manager: "&#FFD700✦ &fTrust Manager"
+    trust-permissions: "&#FFD700✦ &f{player} &7({page}/2)"
+    base-statistics: "&#FFD700✦ &fBase Statistics"
+    protection-info: "&#FFD700✦ &fProtection Info"
+
+  # ===========================================
+  # MENU ITEMS - MAIN MENU
+  # ===========================================
+  main:
+    # Your Base item (slot 4)
+    your-base:
+      name: "&#FFD700✦ &fYour Base"
+      lore:
+        - ""
+        - "&#AAAAAASSize: &#55FF55{dimensions}"
+        - "&#AAAAAAVolume: &#FFD700{volume} blocks"
+        - "&#AAAAAAWorld: &f{world}"
+        - ""
+        - "&#55FF55✓ Protection Active"
+    
+    # Trust Manager (slot 20)
+    trust-manager:
+      name: "&#55FFFF✦ Trust Manager"
+      lore:
+        - ""
+        - "&#AAAAAAManage who can interact with"
+        - "&#AAAAAAyour base when you're online"
+        - "&#AAAAAAor offline."
+        - ""
+        - "&#666666Trusted: &f{count} players"
+        - ""
+        - "&#FFFF55▸ Click to manage"
+    
+    # Protection Info (slot 22)
+    protection-info:
+      name: "&#FFAA00✦ Protection Info"
+      lore:
+        - ""
+        - "&#AAAAAAView your base"
+        - "&#AAAAAAprotection information."
+        - ""
+        - "&#666666Status: &#55FF55Protected"
+        - ""
+        - "&#FFFF55▸ Click to view"
+    
+    # Modify Boundaries (slot 24)
+    modify-boundaries:
+      name: "&#FF5555✦ Modify Boundaries"
+      lore:
+        - ""
+        - "&#AAAAAAGet the selector tool to"
+        - "&#AAAAAAadjust your base boundaries."
+        - ""
+        - "&#666666Cost: &#FFD700{cost} SkillCoins/block"
+        - ""
+        - "&#FFFF55▸ Click to get tool"
+    
+    # Boundary Particles (slot 29)
+    particles-on:
+      name: "&#55FF55✦ Boundary Particles"
+      lore:
+        - ""
+        - "&#AAAAAAToggle particle visualization"
+        - "&#AAAAAAof your base boundaries."
+        - ""
+        - "&#666666Status: &#55FF55ON"
+        - ""
+        - "&#FFFF55▸ Click to toggle"
+    particles-off:
+      name: "&#FF5555✦ Boundary Particles"
+      lore:
+        - ""
+        - "&#AAAAAAToggle particle visualization"
+        - "&#AAAAAAof your base boundaries."
+        - ""
+        - "&#666666Status: &#FF5555OFF"
+        - ""
+        - "&#FFFF55▸ Click to toggle"
+    
+    # Base Statistics (slot 31)
+    statistics:
+      name: "&#55FF55✦ Base Statistics"
+      lore:
+        - ""
+        - "&#AAAAAAView detailed statistics"
+        - "&#AAAAAAabout your base."
+        - ""
+        - "&#FFFF55▸ Click to view"
+    
+    # Abandon Base (slot 33)
+    abandon-base:
+      name: "&#FF5555✦ Abandon Base"
+      lore:
+        - ""
+        - "&#AAAAAARemove this base from your"
+        - "&#AAAAAAprotected bases list."
+        - ""
+        - "&#FF5555⚠ This cannot be undone!"
+        - ""
+        - "&#FFFF55▸ Shift-Click to abandon"
+
+  # ===========================================
+  # MENU ITEMS - BASE SELECTOR
+  # ===========================================
+  selector:
+    header:
+      name: "&#FFD700✦ Your Bases"
+      lore:
+        - ""
+        - "&#AAAAAAYou have &f{count} &#AAAAAAbase(s)."
+        - ""
+        - "&#FFFF55Click a base to manage it"
+    
+    base-item:
+      name: "&#55FFFF✦ Base #{number} &#666666({dimension})"
+      lore:
+        - ""
+        - "&#AAAAAAWorld: &f{world}"
+        - "&#AAAAAASize: &#55FF55{dimensions}"
+        - "&#AAAAAAVolume: &#FFD700{volume} blocks"
+        - ""
+        - "&#AAAAAACenter: &#55FFFF{center}"
+        - ""
+        - "&#55FF55✓ &#AAAAAAProtected & Confirmed"
+        - ""
+        - "&#FFFF55▸ Click to manage this base"
+
+  # ===========================================
+  # MENU ITEMS - TRUST MANAGER
+  # ===========================================
+  trust-list:
+    header:
+      name: "&#FFD700✦ Trusted Players"
+      lore:
+        - ""
+        - "&#AAAAAAPlayers who can interact with"
+        - "&#AAAAAAyour base based on their"
+        - "&#AAAAAAPermission settings."
+        - ""
+        - "&#FFFF55Click a player to edit permissions"
+    
+    player-item:
+      name: "&#55FFFF{name}"
+      lore:
+        - ""
+        - "&#55FF55Online: &f{online_perms}"
+        - "&#FFFF55Offline: &f{offline_perms}"
+        - ""
+        - "&#FFFF55▸ Click to edit permissions"
+    
+    add-player:
+      name: "&#55FF55➕ Add Trusted Player"
+      lore:
+        - ""
+        - "&#AAAAAAAdd a new player to your"
+        - "&#AAAAAAtrusted list."
+        - ""
+        - "&#FFFF55▸ Click and type their name"
+        - "&#666666Or use: /trust <name>"
+
+  # ===========================================
+  # MENU ITEMS - PERMISSIONS
+  # ===========================================
+  permissions:
+    # Section headers
+    online-header: "&#55FF55━━━ When You're ONLINE ━━━"
+    offline-header: "&#FFFF55━━━ When You're OFFLINE ━━━"
+    
+    # Permission toggles (enabled)
+    toggle-enabled:
+      name: "&#55FF55✓ &f{permission}"
+      lore:
+        - ""
+        - "&#AAAAAA{description1}"
+        - "&#AAAAAA{description2}"
+        - ""
+        - "&#666666Status: &#55FF55ALLOWED"
+        - ""
+        - "&#FFFF55▸ Click to toggle"
+    
+    # Permission toggles (disabled)
+    toggle-disabled:
+      name: "&#FF5555✗ &f{permission}"
+      lore:
+        - ""
+        - "&#AAAAAA{description1}"
+        - "&#AAAAAA{description2}"
+        - ""
+        - "&#666666Status: &#FF5555DENIED"
+        - ""
+        - "&#FFFF55▸ Click to toggle"
+    
+    # Permission names and descriptions
+    break-blocks:
+      name: "Break Blocks"
+      online-desc:
+        - "Mine and break blocks"
+        - "in your base"
+      offline-desc:
+        - "Break blocks while"
+        - "you're offline"
+    place-blocks:
+      name: "Place Blocks"
+      online-desc:
+        - "Place and build"
+        - "in your base"
+      offline-desc:
+        - "Place blocks while"
+        - "you're offline"
+    containers:
+      name: "Containers"
+      online-desc:
+        - "Open chests, barrels"
+        - "and other storage"
+      offline-desc:
+        - "Access storage while"
+        - "you're offline"
+    doors-gates:
+      name: "Doors & Gates"
+      online-desc:
+        - "Use doors, trapdoors"
+        - "and fence gates"
+      offline-desc:
+        - "Use doors while"
+        - "you're offline"
+    redstone:
+      name: "Redstone"
+      online-desc:
+        - "Use buttons, levers"
+        - "pressure plates"
+      offline-desc:
+        - "Use redstone devices"
+        - "while you're offline"
+    entities:
+      name: "Entities"
+      online-desc:
+        - "Damage animals and"
+        - "mobs in your base"
+      offline-desc:
+        - "Damage entities while"
+        - "you're offline"
+    vehicles:
+      name: "Vehicles"
+      online-desc:
+        - "Break and place boats"
+        - "minecarts, armor stands"
+      offline-desc:
+        - "Vehicle interactions"
+        - "while you're offline"
+    decorations:
+      name: "Decorations"
+      online-desc:
+        - "Item frames, paintings"
+        - "leads, name tags"
+      offline-desc:
+        - "Decoration interactions"
+        - "while you're offline"
+    
+    # Remove player button
+    remove-player:
+      name: "&#FF5555✗ Remove {player}"
+      lore:
+        - ""
+        - "&#AAAAAARemove this player from"
+        - "&#AAAAAAyour trusted list."
+        - ""
+        - "&#FF5555⚠ Cannot be undone!"
+
+  # ===========================================
+  # MENU ITEMS - STATISTICS
+  # ===========================================
+  stats:
+    header:
+      name: "&#FFD700✦ Base Statistics"
+      lore:
+        - ""
+        - "&#AAAAAADetailed information about"
+        - "&#AAAAAAyour protected base."
+    
+    dimensions:
+      name: "&#55FFFFDimensions"
+      lore:
+        - ""
+        - "&#AAAAAAWidth: &f{width} blocks"
+        - "&#AAAAAALength: &f{length} blocks"
+        - "&#AAAAAAHeight: &f{height} blocks"
+    
+    volume:
+      name: "&#55FF55Total Volume"
+      lore:
+        - ""
+        - "&#FFD700{volume} &#AAAAAAblocks"
+        - ""
+        - "&#666666Protected area"
+    
+    location:
+      name: "&#FFAA00Location"
+      lore:
+        - ""
+        - "&#AAAAAAWorld: &f{world}"
+        - ""
+        - "&#AAAAAAFrom: &#55FFFF{from}"
+        - "&#AAAAAATo: &#55FFFF{to}"
+    
+    trusted-count:
+      name: "&#FF55FFTrusted Players"
+      lore:
+        - ""
+        - "&#FFD700{count} &#AAAAAAplayers trusted"
+        - ""
+        - "&#666666Click Trust Manager to edit"
+      lore-empty:
+        - ""
+        - "&#FFD700{count} &#AAAAAAplayers trusted"
+        - ""
+        - "&#666666No trusted players"
+    
+    created:
+      name: "&#55FFFFCreated"
+      lore:
+        - ""
+        - "&f{date}"
+        - ""
+        - "&#666666When the base was detected"
+    
+    detection-status:
+      name: "&#55FF55Detection Status"
+      lore:
+        - ""
+        - "&#55FF55✓ Successfully Detected"
+        - ""
+        - "&#666666Automatic detection"
+    
+    status-confirmed:
+      name: "&#55FF55Status"
+      lore:
+        - ""
+        - "&#55FF55✓ Confirmed & Protected"
+        - ""
+        - "&#666666Protection is active"
+    status-unconfirmed:
+      name: "&#FF5555Status"
+      lore:
+        - ""
+        - "&#FF5555✗ Not Confirmed"
+        - ""
+        - "&#666666Use /basedet confirm"
+
+  # ===========================================
+  # MENU ITEMS - PROTECTION INFO
+  # ===========================================
+  settings:
+    header:
+      name: "&#FFD700✦ Protection Information"
+      lore:
+        - ""
+        - "&#AAAAAAView your base"
+        - "&#AAAAAAprotection status."
+    
+    protection-active:
+      name: "&#55FF55Protection Status"
+      lore:
+        - ""
+        - "&#55FF55✓ ACTIVE"
+        - ""
+        - "&#AAAAAAYour base is protected"
+        - "&#AAAAAAfrom unauthorized access."
+    protection-inactive:
+      name: "&#FF5555Protection Status"
+      lore:
+        - ""
+        - "&#FF5555✗ INACTIVE"
+        - ""
+        - "&#AAAAAAYour base is not confirmed"
+        - "&#AAAAAAyet. Use /base confirm"
+    
+    note:
+      name: "&#666666Note"
+      lore:
+        - ""
+        - "&#AAAAAAProtection rules are configured"
+        - "&#AAAAAAby server administrators."
+        - ""
+        - "&#666666Use Trust Manager to share access."
+
+# ===========================================
+# TELEPORT MESSAGES
+# ===========================================
+teleport:
+  disabled: "&#FF5555Teleportation is disabled!"
+  blocked-in-combat: "&#FF5555Cannot teleport while in combat!"
+  on-cooldown: "&#FFFF55Teleport on cooldown! Wait {seconds}s"
+  not-enough-coins: "&#FF5555Not enough SkillCoins! Need {cost}"
+  world-not-found: "&#FF5555World not found!"
+  starting: "&#55FFFFTeleporting in {seconds} seconds... Don't move!"
+  cancelled: "&#FF5555Teleport cancelled: {reason}"
+  success: "&#55FF55Teleported to your base!"
+  transaction-failed: "&#FF5555Transaction failed!"
+  
+  # Cancel reasons
+  cancel-moved: "You moved!"
+  cancel-damage: "You took damage!"
+  cancel-disconnected: "Disconnected"
+  
+  # Menu item states
+  item-disabled:
+    name: "&#666666✦ Teleport Disabled"
+    lore:
+      - ""
+      - "&#666666This feature is disabled"
+      - "&#666666by the server."
+  item-combat:
+    name: "&#FF5555✦ Teleport Blocked"
+    lore:
+      - ""
+      - "&#FF5555⚔ You are in combat!"
+      - ""
+      - "&#AAAAAAWait &#FFFF55{seconds}s &#AAAAAbefore teleporting."
+      - ""
+      - "&#666666Combat disables teleportation"
+  item-cooldown:
+    name: "&#FFAA00✦ Teleport on Cooldown"
+    lore:
+      - ""
+      - "&#AAAAAAWait &#FFFF55{seconds}s &#AAAAAbefore teleporting."
+      - ""
+      - "&#666666Cooldown: {total}s"
+  item-ready:
+    name: "&#AA55FF✦ Teleport to Base"
+    lore:
+      - ""
+      - "&#AAAAAATeleport to the center"
+      - "&#AAAAAAof your base."
+      - ""
+      - "&#666666Cost: &#FFD700{cost} SkillCoins"
+      - "&#666666Delay: &#FFFF55{delay}s"
+      - "&#666666• Cancelled if you move"
+      - "&#666666• Cancelled if damaged"
+      - "&#666666• Blocked during combat"
+      - ""
+      - "&#FFFF55▸ Click to teleport"
+
+# ===========================================
+# SELECTOR TOOL MESSAGES
+# ===========================================
+selector:
+  # Tool item
+  tool:
+    name: "&#FFD700✦ &fBase Selector Tool"
+    lore:
+      - ""
+      - "&#AAAAAAModify your base boundaries with precision."
+      - ""
+      - "&#55FF55▸ &#FFFF55Left Click &#AAAAAA- Set first corner"
+      - "&#FF5555▸ &#FFFF55Right Click &#AAAAAA- Set second corner"
+      - ""
+      - "&#55FFFF▸ &#FFFF55Sneak + Left &#AAAAAA- Confirm changes"
+      - "&#FFAAAA▸ &#FFFF55Sneak + Right &#AAAAAA- Cancel selection"
+      - ""
+      - "&#AAAAAA━━━━━━━━━━━━━━━━━━━━━━━━"
+      - "&#FFD700Cost: &f{cost} SkillCoins/block"
+      - "&#55FF55✓ Shrinking is FREE!"
+      - ""
+      - "&#666666WDP-BaseDet Selection Tool"
+  
+  # Errors
+  already-have-tool: "&eYou already have a &6Base Selector Tool&e!"
+  no-base-in-world: "&cYou don't have a confirmed base in this world!"
+  selection-cancelled: "&eSelection cancelled."
+  must-set-both-corners: "&cYou must set both corners first!"
+  exceeds-limits: "&cSelection exceeds size limits! Check the preview."
+  not-enough-coins: "&cYou don't have enough SkillCoins!"
+  coins-required: "&#AAAAAA  Required: &#FFD700{cost} SkillCoins"
+  
+  # Corner set messages
+  corner-1-set: "&#55FF55▸ &fCorner 1 set: &#55FF55{x}, {y}, {z}"
+  corner-2-set: "&#FF5555▸ &fCorner 2 set: &#FF5555{x}, {y}, {z}"
+  
+  # Current base info
+  info-header: "&#FFD700━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  current-base-title: "&#FFD700  ✦ &fCurrent Base Information"
+  info-world: "&#AAAAAA  World: &f{world}"
+  info-location: "&#AAAAAA  Location: &#55FFFF{from} &#AAAAAA→ &#55FFFF{to}"
+  info-size: "&#AAAAAA  Size: &#55FF55{dimensions}"
+  info-volume: "&#AAAAAA  Volume: &#FFD700{volume} blocks"
+  
+  # Selection preview
+  preview-title: "&#FFD700  ✦ &fSelection Preview"
+  preview-current: "&#55FFFF  Current: &#AAAAAA{dimensions} &#666666({volume} blocks)"
+  preview-new: "{color}  New: &#AAAAAA{dimensions} &#666666({volume} blocks)"
+  preview-expanding: "&#55FF55  ▲ Expanding: +{blocks} blocks"
+  preview-shrinking: "&#FF5555  ▼ Shrinking: {blocks} blocks"
+  preview-same-size: "&#FFFF55  ◆ Same size - location change only"
+  preview-cost: "&#FFD700  ⬤ Cost: &f{cost} SkillCoins"
+  preview-cost-free: "&#55FF55  ⬤ Cost: FREE"
+  preview-invalid: "&#FF5555  ⚠ INVALID SELECTION:"
+  preview-exceeds-max: "&#FF5555    • Exceeds maximum size limits!"
+  preview-below-min: "&#FF5555    • Below minimum size limits!"
+  preview-confirm-hint: "&#AAAAAA  &#FFFF55Sneak + Left Click &#AAAAto confirm"
+  preview-cancel-hint: "&#AAAAAA  &#FFFF55Sneak + Right Click &#AAAAto cancel"
+  
+  # Success message
+  success-header: "&#55FF55━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  success-title: "&#55FF55  ✓ &fBase boundaries updated!"
+  success-size: "&#AAAAAA  New size: &f{dimensions}"
+  success-charged: "&#AAAAAA  Charged: &#FFD700{cost} SkillCoins"
+  
+  # Instructions
+  instructions-title: "&#FFD700  ✦ &fBase Selector Tool"
+  instructions-left-block: "&#55FF55  ▸ &#FFFF55Left Click Block &#AAAAAA- Set corner 1 &#55FF55(green)"
+  instructions-right-block: "&#FF5555  ▸ &#FFFF55Right Click Block &#AAAAAA- Set corner 2 &#FF5555(red)"
+  instructions-left-air: "&#AAAAAA  ▸ &#FFFF55Left Click Air &#AAAAAA- View current base"
+  instructions-right-air: "&#AAAAAA  ▸ &#FFFF55Right Click Air &#AAAAAA- View selection"
+  instructions-sneak-left: "&#55FFFF  ▸ &#FFFF55Sneak + Left &#AAAAAA- Confirm changes"
+  instructions-sneak-right: "&#FFAAAA  ▸ &#FFFF55Sneak + Right &#AAAAAA- Cancel"
+
+# ===========================================
+# PROTECTION MESSAGES
+# ===========================================
+protection:
+  protection-active: "&cThis area is protected! The owner is offline."
+  
+  # Combat notifications
+  combat-enter: "&e⚔ Combat detected! Base protection temporarily lifted."
+  combat-in-base: "&7  Combat in this base is allowed while tagged!"
+  owner-combat-notification: "&c⚔ {player} entered your base while in combat!"
+
+# ===========================================
+# COMBAT MESSAGES
+# ===========================================
+combat:
+  tagged: "&c⚔ You are now in combat! Don't log out!"
+  ended: "&a✓ You are no longer in combat."
+  leave-zone: "&aYou left the combat zone. Protection restored."
+
+# ===========================================
+# NAVBAR ITEMS
+# ===========================================
+navbar:
+  close:
+    name: "&#FF5555✗ Close"
+    description: "Close this menu"
+  back:
+    name: "&#FFAA00◀ Back"
+    description: "Return to previous menu"
+  previous-page:
+    name: "&#55FFFF◀ Previous Page"
+    description: "Go to previous page"
+  next-page:
+    name: "&#55FFFFNext Page ▶"
+    description: "Go to next page"
+
+# ===========================================
+# SUCCESS/ERROR MESSAGES
+# ===========================================
+success:
+  base-abandoned: "&#FF5555Base abandoned!"
+  particles-enabled: "&#55FF55Boundary particles enabled!"
+  particles-disabled: "&#FF5555Boundary particles disabled!"
+  shift-click-to-abandon: "&#FFFF55Shift-click to abandon!"
+
+errors:
+  selector-disabled: "&#FF5555Selector tool is disabled!"
+  no-tool-permission: "&#FF5555You don't have permission to use the selector tool!"

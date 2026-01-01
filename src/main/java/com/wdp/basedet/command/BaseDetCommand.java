@@ -2,6 +2,7 @@ package com.wdp.basedet.command;
 
 import com.wdp.basedet.WDPBaseDetPlugin;
 import com.wdp.basedet.config.ConfigManager;
+import com.wdp.basedet.config.MessageManager;
 import com.wdp.basedet.detection.DetectionManager;
 import com.wdp.basedet.model.Base;
 import org.bukkit.Bukkit;
@@ -25,6 +26,7 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
     
     private final WDPBaseDetPlugin plugin;
     private final ConfigManager config;
+    private final MessageManager messages;
     
     private static final List<String> USER_SUBCOMMANDS = Arrays.asList(
             "confirm", "deny", "view", "detect", "score", "help", "tool", "expand", "menu"
@@ -37,6 +39,7 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
     public BaseDetCommand(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfigManager();
+        this.messages = plugin.getMessages();
     }
     
     @Override
@@ -66,7 +69,7 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
             case "list" -> handleList(sender, args);
             case "delete" -> handleDelete(sender, args);
             default -> {
-                sender.sendMessage(config.getMessagePrefix() + ChatColor.RED + "Unknown command. Use /base help");
+                messages.send(sender, "commands.unknown-command");
             }
         }
         
@@ -75,15 +78,14 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
     
     private void handleConfirm(CommandSender sender) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "This command can only be used by players!");
+            messages.send(sender, "commands.players-only");
             return;
         }
         
         DetectionManager detection = plugin.getDetectionManager();
         
         if (!detection.hasActivePrompt(player.getUniqueId())) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "You don't have a pending base detection!");
+            messages.send(player, "detection.no-pending-detection");
             return;
         }
         
@@ -92,15 +94,14 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
     
     private void handleDeny(CommandSender sender) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "This command can only be used by players!");
+            messages.send(sender, "commands.players-only");
             return;
         }
         
         DetectionManager detection = plugin.getDetectionManager();
         
         if (!detection.hasActivePrompt(player.getUniqueId())) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "You don't have a pending base detection!");
+            messages.send(player, "detection.no-pending-detection");
             return;
         }
         
@@ -109,12 +110,12 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
     
     private void handleView(CommandSender sender) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "This command can only be used by players!");
+            messages.send(sender, "commands.players-only");
             return;
         }
         
         if (!player.hasPermission("basedet.user.view")) {
-            player.sendMessage(config.getMessage("no-permission"));
+            messages.send(player, "commands.no-permission");
             return;
         }
         
@@ -122,38 +123,35 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
         boolean nowViewing = plugin.getParticleManager().toggleViewing(player.getUniqueId());
         
         if (nowViewing) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + 
-                    "Base visualization enabled. You can now see your base boundaries.");
+            messages.send(player, "commands.view-enabled");
         } else {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.YELLOW + 
-                    "Base visualization disabled.");
+            messages.send(player, "commands.view-disabled");
         }
         
         // Also show base info
         List<Base> bases = plugin.getDatabaseManager().getPlayerBases(player.getUniqueId());
         if (bases.isEmpty()) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.GRAY + 
-                    "You don't have any confirmed bases yet.");
+            messages.send(player, "commands.no-bases-yet");
         } else {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.AQUA + 
-                    "Your bases (" + bases.size() + "):");
+            messages.send(player, "commands.your-bases", "count", String.valueOf(bases.size()));
             for (int i = 0; i < bases.size(); i++) {
                 Base base = bases.get(i);
-                player.sendMessage(ChatColor.GRAY + "  " + (i + 1) + ". " + 
-                        ChatColor.WHITE + base.getLocationString() + 
-                        ChatColor.GRAY + " (" + base.getDimensionsString() + ")");
+                messages.sendRaw(player, "commands.base-list-item", 
+                        "number", String.valueOf(i + 1),
+                        "location", base.getLocationString(),
+                        "size", base.getDimensionsString());
             }
         }
     }
     
     private void handleDetect(CommandSender sender) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "This command can only be used by players!");
+            messages.send(sender, "commands.players-only");
             return;
         }
         
         if (!player.hasPermission("basedet.user.detect")) {
-            player.sendMessage(config.getMessage("no-permission"));
+            messages.send(player, "commands.no-permission");
             return;
         }
         
@@ -161,22 +159,21 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
         double threshold = config.getDetectionThreshold();
         
         if (score < threshold * 0.5) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.YELLOW + 
-                    "Not enough activity detected yet. Keep building!");
-            player.sendMessage(ChatColor.GRAY + "  Current score: " + ChatColor.WHITE + 
-                    String.format("%.1f", score) + ChatColor.GRAY + " / " + threshold);
+            messages.send(player, "commands.not-enough-activity");
+            messages.sendRaw(player, "commands.current-score", 
+                    "score", String.format("%.1f", score),
+                    "threshold", String.valueOf((int) threshold));
             return;
         }
         
-        player.sendMessage(config.getMessagePrefix() + ChatColor.AQUA + 
-                "Analyzing your activity...");
+        messages.send(player, "commands.analyzing-activity");
         
         plugin.getDetectionManager().triggerManualDetection(player);
     }
     
     private void handleScore(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "This command can only be used by players!");
+            messages.send(sender, "commands.players-only");
             return;
         }
         
@@ -186,8 +183,7 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
         if (args.length > 1 && player.hasPermission("basedet.admin.view")) {
             Player target = Bukkit.getPlayer(args[1]);
             if (target == null) {
-                player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                        "Player not found: " + args[1]);
+                messages.send(player, "commands.player-not-found", "player", args[1]);
                 return;
             }
             targetUUID = target.getUniqueId();
@@ -201,12 +197,13 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
         double threshold = config.getDetectionThreshold();
         double percentage = (score / threshold) * 100;
         
-        player.sendMessage(config.getMessagePrefix() + ChatColor.AQUA + 
-                "Detection Score for " + targetName + ":");
-        player.sendMessage(ChatColor.GRAY + "  Score: " + ChatColor.WHITE + 
-                String.format("%.2f", score) + ChatColor.GRAY + " / " + threshold);
-        player.sendMessage(ChatColor.GRAY + "  Progress: " + getProgressBar(percentage) + 
-                ChatColor.WHITE + " " + String.format("%.1f%%", Math.min(percentage, 100)));
+        messages.send(player, "commands.detection-score-for", "player", targetName);
+        messages.sendRaw(player, "commands.score-display", 
+                "score", String.format("%.2f", score),
+                "threshold", String.valueOf((int) threshold));
+        messages.sendRaw(player, "commands.progress-display", 
+                "bar", getProgressBar(percentage),
+                "percentage", String.format("%.1f", Math.min(percentage, 100)));
     }
     
     private String getProgressBar(double percentage) {
@@ -224,38 +221,35 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
     
     private void handleReload(CommandSender sender) {
         if (!sender.hasPermission("basedet.admin.reload")) {
-            sender.sendMessage(config.getMessage("no-permission"));
+            messages.send(sender, "commands.no-permission");
             return;
         }
         
         plugin.reload();
-        sender.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + 
-                "Configuration reloaded!");
+        messages.send(sender, "commands.config-reloaded");
     }
     
     private void handleTool(CommandSender sender) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "This command can only be used by players!");
+            messages.send(sender, "commands.players-only");
             return;
         }
         
         if (!player.hasPermission("basedet.user.tool")) {
-            player.sendMessage(config.getMessage("no-permission"));
+            messages.send(player, "commands.no-permission");
             return;
         }
         
         // Check if selector is enabled
         if (!config.isSelectorEnabled()) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "The selector tool is currently disabled!");
+            messages.send(player, "commands.selector-disabled");
             return;
         }
         
         // Check if player has a base
         List<Base> bases = plugin.getDatabaseManager().getPlayerBases(player.getUniqueId());
         if (bases.isEmpty()) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "You don't have a confirmed base yet!");
+            messages.send(player, "commands.no-confirmed-base");
             return;
         }
         
@@ -264,13 +258,12 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
     
     private void handleExpand(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "This command can only be used by players!");
+            messages.send(sender, "commands.players-only");
             return;
         }
         
         if (args.length < 2) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Usage: /base expand <confirm|deny>");
+            messages.send(player, "commands.expand-usage");
             return;
         }
         
@@ -279,19 +272,18 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
         switch (action) {
             case "confirm" -> plugin.getExpansionManager().confirmExpansion(player);
             case "deny" -> plugin.getExpansionManager().denyExpansion(player);
-            default -> player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Usage: /base expand <confirm|deny>");
+            default -> messages.send(player, "commands.expand-usage");
         }
     }
     
     private void handleMenu(CommandSender sender) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "This command can only be used by players!");
+            messages.send(sender, "commands.players-only");
             return;
         }
         
         if (!player.hasPermission("basedet.user.menu")) {
-            player.sendMessage(config.getMessage("no-permission"));
+            messages.send(player, "commands.no-permission");
             return;
         }
         
@@ -302,8 +294,7 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
                 .toList();
         
         if (confirmedBases.isEmpty()) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "You don't have a confirmed base yet!");
+            messages.send(player, "commands.no-confirmed-base");
             return;
         }
         
@@ -318,62 +309,56 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
 
     private void handleDebug(CommandSender sender) {
         if (!sender.hasPermission("basedet.admin.debug")) {
-            sender.sendMessage(config.getMessage("no-permission"));
+            messages.send(sender, "commands.no-permission");
             return;
         }
         
         // Toggle debug mode (would need to implement in config)
-        sender.sendMessage(config.getMessagePrefix() + ChatColor.YELLOW + 
-                "Debug info:");
-        sender.sendMessage(ChatColor.GRAY + "  Database: " + config.getDatabaseType());
-        sender.sendMessage(ChatColor.GRAY + "  Economy: " + 
-                (plugin.getEconomyIntegration() != null && plugin.getEconomyIntegration().isEnabled()));
-        sender.sendMessage(ChatColor.GRAY + "  DiscordSRV: " + 
-                (plugin.getDiscordIntegration() != null && plugin.getDiscordIntegration().isEnabled()));
-        sender.sendMessage(ChatColor.GRAY + "  CMI: " + 
-                (plugin.getCmiIntegration() != null && plugin.getCmiIntegration().isEnabled()));
+        messages.send(sender, "commands.debug-info");
+        messages.sendRaw(sender, "commands.debug-database", "type", config.getDatabaseType());
+        messages.sendRaw(sender, "commands.debug-economy", "status", 
+                String.valueOf(plugin.getEconomyIntegration() != null && plugin.getEconomyIntegration().isEnabled()));
+        messages.sendRaw(sender, "commands.debug-discord", "status", 
+                String.valueOf(plugin.getDiscordIntegration() != null && plugin.getDiscordIntegration().isEnabled()));
+        messages.sendRaw(sender, "commands.debug-cmi", "status", 
+                String.valueOf(plugin.getCmiIntegration() != null && plugin.getCmiIntegration().isEnabled()));
     }
     
     private void handleForce(CommandSender sender, String[] args) {
         if (!sender.hasPermission("basedet.admin.force")) {
-            sender.sendMessage(config.getMessage("no-permission"));
+            messages.send(sender, "commands.no-permission");
             return;
         }
         
         if (args.length < 2) {
-            sender.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Usage: /base force <player>");
+            messages.send(sender, "commands.force-usage");
             return;
         }
         
         Player target = Bukkit.getPlayer(args[1]);
         if (target == null) {
-            sender.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Player not found: " + args[1]);
+            messages.send(sender, "commands.player-not-found", "player", args[1]);
             return;
         }
         
         plugin.getDetectionManager().triggerManualDetection(target);
-        sender.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + 
-                "Forced detection for " + target.getName());
+        messages.send(sender, "commands.force-triggered", "player", target.getName());
     }
     
     private void handleInfo(CommandSender sender, String[] args) {
         if (!sender.hasPermission("basedet.admin.view")) {
-            sender.sendMessage(config.getMessage("no-permission"));
+            messages.send(sender, "commands.no-permission");
             return;
         }
         
         if (args.length < 2) {
-            sender.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Usage: /base info <player>");
+            messages.send(sender, "commands.info-usage");
             return;
         }
         
         Player target = Bukkit.getPlayer(args[1]);
         if (target == null) {
-            sender.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Player not found: " + args[1]);
+            messages.send(sender, "commands.player-not-found", "player", args[1]);
             return;
         }
         
@@ -381,8 +366,7 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
         List<Base> bases = plugin.getDatabaseManager().getPlayerBases(uuid);
         double score = plugin.getScoreManager().getScore(uuid);
         
-        sender.sendMessage(config.getMessagePrefix() + ChatColor.AQUA + 
-                "Player Info: " + target.getName());
+        messages.send(sender, "commands.player-info", "player", target.getName());
         sender.sendMessage(ChatColor.GRAY + "  Score: " + ChatColor.WHITE + 
                 String.format("%.2f", score));
         sender.sendMessage(ChatColor.GRAY + "  Bases: " + ChatColor.WHITE + bases.size());
@@ -396,39 +380,37 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
     
     private void handleList(CommandSender sender, String[] args) {
         if (!sender.hasPermission("basedet.admin.view")) {
-            sender.sendMessage(config.getMessage("no-permission"));
+            messages.send(sender, "commands.no-permission");
             return;
         }
         
         List<Base> allBases = plugin.getDatabaseManager().getAllConfirmedBases();
         
-        sender.sendMessage(config.getMessagePrefix() + ChatColor.AQUA + 
-                "All Protected Bases (" + allBases.size() + "):");
+        messages.send(sender, "commands.all-bases-header", "count", String.valueOf(allBases.size()));
         
         for (Base base : allBases) {
             String ownerName = plugin.getTrustManager().getPlayerName(base.getOwnerUUID());
-            sender.sendMessage(ChatColor.GRAY + "  - " + ChatColor.WHITE + ownerName + 
-                    ChatColor.GRAY + ": " + base.getLocationString());
+            messages.sendRaw(sender, "commands.all-bases-item", 
+                    "owner", ownerName,
+                    "location", base.getLocationString());
         }
     }
     
     private void handleDelete(CommandSender sender, String[] args) {
         if (!sender.hasPermission("basedet.admin.bypass")) {
-            sender.sendMessage(config.getMessage("no-permission"));
+            messages.send(sender, "commands.no-permission");
             return;
         }
         
         if (args.length < 2) {
-            sender.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Usage: /base delete <player>");
+            messages.send(sender, "commands.delete-usage");
             return;
         }
         
         @SuppressWarnings("deprecation")
         org.bukkit.OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
         if (!target.hasPlayedBefore()) {
-            sender.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Player not found: " + args[1]);
+            messages.send(sender, "commands.player-not-found", "player", args[1]);
             return;
         }
         
@@ -437,48 +419,34 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
             plugin.getDatabaseManager().deleteBase(base.getId());
         }
         
-        sender.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + 
-                "Deleted " + bases.size() + " bases for " + target.getName());
+        messages.send(sender, "commands.bases-deleted", 
+                "count", String.valueOf(bases.size()),
+                "player", target.getName());
     }
     
     private void sendHelp(CommandSender sender) {
         sender.sendMessage("");
-        sender.sendMessage(ChatColor.GOLD + "━━━ " + ChatColor.AQUA + "WDP-BaseDet Help" + 
-                ChatColor.GOLD + " ━━━");
+        messages.sendRaw(sender, "help.header");
         sender.sendMessage("");
-        sender.sendMessage(ChatColor.YELLOW + "User Commands:");
-        sender.sendMessage(ChatColor.WHITE + "  /base menu" + ChatColor.GRAY + 
-                " - Open base management menu");
-        sender.sendMessage(ChatColor.WHITE + "  /base confirm" + ChatColor.GRAY + 
-                " - Confirm a detected base");
-        sender.sendMessage(ChatColor.WHITE + "  /base deny" + ChatColor.GRAY + 
-                " - Deny a detected base");
-        sender.sendMessage(ChatColor.WHITE + "  /base view" + ChatColor.GRAY + 
-                " - Toggle base visualization");
-        sender.sendMessage(ChatColor.WHITE + "  /base detect" + ChatColor.GRAY + 
-                " - Manually trigger detection");
-        sender.sendMessage(ChatColor.WHITE + "  /base score" + ChatColor.GRAY + 
-                " - View your detection score");
-        sender.sendMessage(ChatColor.WHITE + "  /base tool" + ChatColor.GRAY + 
-                " - Get base selector tool");
-        sender.sendMessage(ChatColor.WHITE + "  /trust" + ChatColor.GRAY + 
-                " - Manage trusted players");
+        messages.sendRaw(sender, "help.user-commands-header");
+        messages.sendRaw(sender, "help.menu");
+        messages.sendRaw(sender, "help.confirm");
+        messages.sendRaw(sender, "help.deny");
+        messages.sendRaw(sender, "help.view");
+        messages.sendRaw(sender, "help.detect");
+        messages.sendRaw(sender, "help.score");
+        messages.sendRaw(sender, "help.tool");
+        messages.sendRaw(sender, "help.trust");
         
         if (sender.hasPermission("basedet.admin")) {
             sender.sendMessage("");
-            sender.sendMessage(ChatColor.RED + "Admin Commands:");
-            sender.sendMessage(ChatColor.WHITE + "  /base reload" + ChatColor.GRAY + 
-                    " - Reload configuration");
-            sender.sendMessage(ChatColor.WHITE + "  /base debug" + ChatColor.GRAY + 
-                    " - View debug info");
-            sender.sendMessage(ChatColor.WHITE + "  /base force <player>" + ChatColor.GRAY + 
-                    " - Force detection");
-            sender.sendMessage(ChatColor.WHITE + "  /base info <player>" + ChatColor.GRAY + 
-                    " - View player info");
-            sender.sendMessage(ChatColor.WHITE + "  /base list" + ChatColor.GRAY + 
-                    " - List all bases");
-            sender.sendMessage(ChatColor.WHITE + "  /base delete <player>" + ChatColor.GRAY + 
-                    " - Delete player's bases");
+            messages.sendRaw(sender, "help.admin-commands-header");
+            messages.sendRaw(sender, "help.reload");
+            messages.sendRaw(sender, "help.debug");
+            messages.sendRaw(sender, "help.force");
+            messages.sendRaw(sender, "help.info");
+            messages.sendRaw(sender, "help.list");
+            messages.sendRaw(sender, "help.delete");
         }
         sender.sendMessage("");
     }
