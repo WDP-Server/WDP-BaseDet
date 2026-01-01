@@ -1375,9 +1375,6 @@ public class MenuManager implements Listener {
     
     /**
      * Cancel a pending teleport
-     */
-    /**
-     * Cancel a pending teleport
      * @param uuid Player UUID
      * @param reasonKey Message key for the cancellation reason (e.g., "cancel-moved", "cancel-damage", "cancel-disconnected")
      */

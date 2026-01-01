@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -76,7 +77,7 @@ public class MessageManager {
         // Load defaults from jar for missing keys
         InputStream defaultStream = plugin.getResource("messages.yml");
         if (defaultStream != null) {
-            try (InputStreamReader reader = new InputStreamReader(defaultStream)) {
+            try (InputStreamReader reader = new InputStreamReader(defaultStream, StandardCharsets.UTF_8)) {
                 YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration(reader);
                 messages.setDefaults(defaultConfig);
             } catch (Exception e) {
