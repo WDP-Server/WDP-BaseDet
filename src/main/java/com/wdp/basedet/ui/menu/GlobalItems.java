@@ -210,15 +210,19 @@ public class GlobalItems {
 
     /**
      * Creates a balance display item showing coins and tokens
+     * Note: These hardcoded values match navbar.yml and are used as fallback when YAML is unavailable
      */
     public ItemStack createBalanceItem(double coins, double tokens) {
         ItemStack item = new ItemStack(Material.GOLD_NUGGET);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName("§6Balance:");
+        
+        // Use MessageManager to translate colors, matching navbar.yml format
+        meta.setDisplayName(plugin.getMessageManager().translateColors("§6Balance:"));
+        
         List<String> lore = new ArrayList<>();
         lore.add(" ");
-        lore.add("§eSkillCoins: §6" + String.format("%,.0f", coins) + " ⛃");
-        lore.add("§aTokens: §2" + String.format("%,.0f", tokens) + " 🎟");
+        lore.add(plugin.getMessageManager().translateColors("§eSkillCoins: §6" + String.format("%,.0f", coins) + " ⛃"));
+        lore.add(plugin.getMessageManager().translateColors("§aTokens: §2" + String.format("%,.0f", tokens) + " 🎟"));
         meta.setLore(lore);
         item.setItemMeta(meta);
         return item;

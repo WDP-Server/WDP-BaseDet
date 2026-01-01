@@ -161,6 +161,7 @@ expansion:
   
   # Deny expansion
   expansion-denied: "&eExpansion cancelled. Your base size remains unchanged."
+  expansion-expired: "&eExpansion prompt expired. Your base size remains unchanged."
   
   # No pending expansion
   no-pending-expansion: "&cNo pending expansion to confirm."
