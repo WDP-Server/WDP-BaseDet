@@ -357,7 +357,8 @@ public class UnifiedMenuManager {
             }
         }
         
-        return result;
+        // Apply color translation for hex colors (&#RRGGBB) and legacy colors (&a, &b, etc.)
+        return plugin.getMessageManager().translateColors(result);
     }
 
     /**

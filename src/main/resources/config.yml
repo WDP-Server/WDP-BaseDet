@@ -133,10 +133,10 @@ prompt:
   auto-confirm-time: 600
   # Pause timer when player leaves
   pause-on-leave: true
-  # Reward for manual confirmation (SkillCoins) - small bonus for engagement
+  # Reward for manual confirmation (SkillCoins) - reduced from 50 to 25 for economy balance
   confirm-reward: 25
-  # Reward for manual denial (SkillCoins) - thanks for honesty
-  deny-reward: 15
+  # Reward for manual denial (SkillCoins) - reduced from 50 to 25 for economy balance
+  deny-reward: 25
   # No reward for auto-confirm
   auto-confirm-reward: 0
 

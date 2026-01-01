@@ -314,7 +314,7 @@ public class ExpansionManager {
             timerTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (activePrompts.containsKey(player.getUniqueId())) {
                     denyExpansion(player);
-                    messages.send(player, "expansion.expansion-denied");
+                    messages.send(player, "expansion.expansion-expired");
                 }
             }, 60 * 20L);
         }

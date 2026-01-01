@@ -1343,7 +1343,7 @@ public class MenuManager implements Listener {
                 @Override
                 public void run() {
                     if (!player.isOnline()) {
-                        cancelTeleport(uuid, "Disconnected");
+                        cancelTeleport(uuid, "cancel-disconnected");
                         cancel();
                         return;
                     }
@@ -1376,7 +1376,12 @@ public class MenuManager implements Listener {
     /**
      * Cancel a pending teleport
      */
-    public void cancelTeleport(UUID uuid, String reason) {
+    /**
+     * Cancel a pending teleport
+     * @param uuid Player UUID
+     * @param reasonKey Message key for the cancellation reason (e.g., "cancel-moved", "cancel-damage", "cancel-disconnected")
+     */
+    public void cancelTeleport(UUID uuid, String reasonKey) {
         TeleportTask task = pendingTeleports.remove(uuid);
         if (task != null && !task.cancelled) {
             task.cancelled = true;
@@ -1385,7 +1390,9 @@ public class MenuManager implements Listener {
             }
             Player player = Bukkit.getPlayer(uuid);
             if (player != null) {
-                messages.send(player, "teleport.cancelled", "reason", reason);
+                // Get the reason message using the key
+                String reasonMessage = messages.getMessage("teleport." + reasonKey);
+                messages.send(player, "teleport.cancelled", "reason", reasonMessage);
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             }
         }
@@ -1442,7 +1449,7 @@ public class MenuManager implements Listener {
         
         // Check if actually moved (not just head rotation)
         if (from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ()) {
-            cancelTeleport(uuid, "You moved!");
+            cancelTeleport(uuid, "cancel-moved");
         }
     }
     
@@ -1455,7 +1462,7 @@ public class MenuManager implements Listener {
         UUID uuid = player.getUniqueId();
         TeleportTask task = pendingTeleports.get(uuid);
         if (task != null && !task.cancelled) {
-            cancelTeleport(uuid, "You took damage!");
+            cancelTeleport(uuid, "cancel-damage");
         }
     }
     
