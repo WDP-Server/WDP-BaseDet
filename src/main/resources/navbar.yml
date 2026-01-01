@@ -1,59 +1,63 @@
-# Unified Navbar Configuration for WDP Plugins
-# This file defines the bottom row (slots 45-53) for all menus
-# Layout: [Back] [Glass] [Glass] [Prev] [Page] [Next] [Glass] [Glass] [Close]
+# ╔═══════════════════════════════════════════════════════════════════════════╗
+# ║                    Unified Navbar Configuration                            ║
+# ║                         WDP Plugin System                                  ║
+# ╚═══════════════════════════════════════════════════════════════════════════╝
+# Layout: [Balance] [Glass] [Glass] [Prev] [Page] [Next] [Glass] [Glass] [Back/Close]
+# Slot 53 shows BACK when previous_menu exists, otherwise shows CLOSE
 
 navbar:
-  back:
+  # Slot 45: Balance display (always visible)
+  balance:
     slot: 45
-    material: spyglass
-    display_name: '§c§l← Back'
+    material: gold_nugget
+    display_name: '§6Balance:'
     lore:
-      - '§7Return to previous menu'
-  
-  glass_left_1:
-    slot: 46
+      - ' '
+      - '§eSkillCoins: §6{coins} ⛃'
+      - '§aTokens: §2{tokens} 🎟'
+
+  # Slots 46-47, 51-52: Glass filler (merged into one definition)
+  glass_fill:
+    slots: [46, 47, 51, 52]
     material: black_stained_glass_pane
     display_name: ' '
-  
-  glass_left_2:
-    slot: 47
-    material: black_stained_glass_pane
-    display_name: ' '
-  
+
+  # Slot 48: Previous page (only shown when page > 1)
   previous_page:
     slot: 48
     material: arrow
     display_name: '§e§l← Previous'
     lore:
       - '§7Go to previous page'
-  
+
+  # Slot 49: Page info (center)
   page_info:
     slot: 49
     material: paper
-    display_name: '§e§lPage §f§l{page} §8§l/ {total_pages}'
+    display_name: '§e§lPage §f§l{page} §8/ §f§l{total_pages}'
     lore:
       - ''
-      - '§7Current page: {page}'
-      - '§7Total pages: {total_pages}'
+      - '§7Current page: §f{page}'
+      - '§7Total pages: §f{total_pages}'
       - ''
-  
+
+  # Slot 50: Next page (only shown when page < total_pages)
   next_page:
     slot: 50
     material: arrow
     display_name: '§e§lNext →'
     lore:
       - '§7Go to next page'
-  
-  glass_right_1:
-    slot: 51
-    material: black_stained_glass_pane
-    display_name: ' '
-  
-  glass_right_2:
-    slot: 52
-    material: black_stained_glass_pane
-    display_name: ' '
-  
+
+  # Slot 53: Back button (shown when previous_menu exists)
+  back:
+    slot: 53
+    material: spyglass
+    display_name: '§c§l← Back'
+    lore:
+      - '§7Return to previous menu'
+
+  # Slot 53: Close button (shown when NO previous_menu)
   close:
     slot: 53
     material: barrier
@@ -61,8 +65,9 @@ navbar:
     lore:
       - '§7Close this menu'
 
-# Exceptions for menus that should only show back button
+# Exceptions for menus that need special navbar handling
 exceptions:
+  # Menus that only show back button (no pagination, no balance)
   skill_selection:
     - skills
     - skill_select
@@ -70,3 +75,8 @@ exceptions:
     - skill_sources
     - skill_stats
     - stat_info
+  
+  # Menus that hide balance display
+  no_balance:
+    - welcome
+    - confirmation
