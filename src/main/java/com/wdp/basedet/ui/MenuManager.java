@@ -1,6 +1,7 @@
 package com.wdp.basedet.ui;
 
 import com.wdp.basedet.WDPBaseDetPlugin;
+import com.wdp.basedet.config.MessageManager;
 import com.wdp.basedet.model.Base;
 import com.wdp.basedet.model.BoundingBox;
 import com.wdp.basedet.model.TrustEntry;
@@ -45,6 +46,7 @@ public class MenuManager implements Listener {
     
     private final WDPBaseDetPlugin plugin;
     private final UnifiedMenuManager unifiedMenuManager;
+    private final MessageManager messages;
     
     // Track open menus
     private final Map<UUID, MenuSession> openMenus = new ConcurrentHashMap<>();
@@ -61,6 +63,7 @@ public class MenuManager implements Listener {
     public MenuManager(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
         this.unifiedMenuManager = new UnifiedMenuManager(plugin);
+        this.messages = plugin.getMessages();
     }
     
     // ==================== MAIN BASE MENU ====================
@@ -773,11 +776,11 @@ public class MenuManager implements Listener {
             case 22 -> openSettingsMenu(player, session.base); // Settings
             case 24 -> { // Selector Tool
                 if (!plugin.getConfigManager().isSelectorEnabled()) {
-                    player.sendMessage(plugin.getConfigManager().getMessagePrefix() + hex("#FF5555") + "Selector tool is disabled!");
+                    messages.send(player, "errors.selector-disabled");
                     return;
                 }
                 if (!player.hasPermission("basedet.user.tool")) {
-                    player.sendMessage(plugin.getConfigManager().getMessagePrefix() + hex("#FF5555") + "You don't have permission to use the selector tool!");
+                    messages.send(player, "errors.no-tool-permission");
                     return;
                 }
                 player.closeInventory();
@@ -785,8 +788,11 @@ public class MenuManager implements Listener {
             }
             case 29 -> { // Toggle particles
                 boolean now = plugin.getParticleManager().toggleViewing(player.getUniqueId());
-                player.sendMessage(plugin.getConfigManager().getMessagePrefix() +
-                        (now ? hex("#55FF55") + "Boundary particles enabled!" : hex("#FF5555") + "Boundary particles disabled!"));
+                if (now) {
+                    messages.send(player, "success.particles-enabled");
+                } else {
+                    messages.send(player, "success.particles-disabled");
+                }
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
                 openMainMenu(player, session.base); // Refresh
             }
@@ -799,10 +805,10 @@ public class MenuManager implements Listener {
                 if (shift) {
                     plugin.getDatabaseManager().deleteBase(session.base.getId());
                     player.closeInventory();
-                    player.sendMessage(plugin.getConfigManager().getMessagePrefix() + hex("#FF5555") + "Base abandoned!");
+                    messages.send(player, "success.base-abandoned");
                     player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 0.8f);
                 } else {
-                    player.sendMessage(plugin.getConfigManager().getMessagePrefix() + hex("#FFFF55") + "Shift-click to abandon!");
+                    messages.send(player, "success.shift-click-to-abandon");
                 }
             }
         }
@@ -849,10 +855,10 @@ public class MenuManager implements Listener {
         if (slot == 40) {
             player.closeInventory();
             player.sendMessage("");
-            player.sendMessage(hex("#FFD700") + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            player.sendMessage(hex("#55FFFF") + "  Type the player name in chat:");
-            player.sendMessage(hex("#AAAAAA") + "  Or use: " + hex("#FFFF55") + "/trust <name>");
-            player.sendMessage(hex("#FFD700") + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            messages.sendRaw(player, "trust.add-player-prompt-header");
+            messages.sendRaw(player, "trust.add-player-prompt");
+            messages.sendRaw(player, "trust.add-player-hint");
+            messages.sendRaw(player, "trust.add-player-prompt-header");
             player.sendMessage("");
         }
     }
@@ -1270,13 +1276,13 @@ public class MenuManager implements Listener {
         
         // Final checks
         if (!config.isTeleportEnabled()) {
-            player.sendMessage(config.getMessagePrefix() + hex("#FF5555") + "Teleportation is disabled!");
+            messages.send(player, "teleport.disabled");
             return;
         }
         
         // Combat check (unless bypassed)
         if (!hasBypass && config.isTeleportBlockedInCombat() && plugin.getCombatManager() != null && plugin.getCombatManager().isInCombat(player)) {
-            player.sendMessage(config.getMessagePrefix() + hex("#FF5555") + "Cannot teleport while in combat!");
+            messages.send(player, "teleport.blocked-in-combat");
             return;
         }
         
@@ -1288,7 +1294,7 @@ public class MenuManager implements Listener {
                 long elapsed = (System.currentTimeMillis() - lastTp) / 1000;
                 if (elapsed < cooldown) {
                     int remaining = (int) (cooldown - elapsed);
-                    player.sendMessage(config.getMessagePrefix() + hex("#FFFF55") + "Teleport on cooldown! Wait " + remaining + "s");
+                    messages.send(player, "teleport.on-cooldown", "seconds", String.valueOf(remaining));
                     return;
                 }
             }
@@ -1298,7 +1304,7 @@ public class MenuManager implements Listener {
         double cost = hasBypass ? 0 : config.getTeleportCost();
         if (cost > 0 && plugin.getEconomyIntegration() != null && plugin.getEconomyIntegration().isEnabled()) {
             if (!plugin.getEconomyIntegration().hasBalance(player, cost)) {
-                player.sendMessage(config.getMessagePrefix() + hex("#FF5555") + "Not enough SkillCoins! Need " + cost);
+                messages.send(player, "teleport.not-enough-coins", "cost", String.valueOf((int) cost));
                 return;
             }
         }
@@ -1310,7 +1316,7 @@ public class MenuManager implements Listener {
         World world = Bukkit.getWorld(base.getWorldName());
         
         if (world == null) {
-            player.sendMessage(config.getMessagePrefix() + hex("#FF5555") + "World not found!");
+            messages.send(player, "teleport.world-not-found");
             return;
         }
         
@@ -1325,7 +1331,7 @@ public class MenuManager implements Listener {
             executeTeleport(player, base, destination, (int) cost);
         } else {
             // Delayed teleport
-            player.sendMessage(config.getMessagePrefix() + hex("#55FFFF") + "Teleporting in " + delay + " seconds... Don't move!");
+            messages.send(player, "teleport.starting", "seconds", String.valueOf(delay));
             player.playSound(player.getLocation(), Sound.BLOCK_PORTAL_TRIGGER, 0.5f, 2.0f);
             
             Location startLoc = player.getLocation().clone();
@@ -1337,7 +1343,7 @@ public class MenuManager implements Listener {
                 @Override
                 public void run() {
                     if (!player.isOnline()) {
-                        cancelTeleport(uuid, "Disconnected");
+                        cancelTeleport(uuid, "cancel-disconnected");
                         cancel();
                         return;
                     }
@@ -1369,8 +1375,10 @@ public class MenuManager implements Listener {
     
     /**
      * Cancel a pending teleport
+     * @param uuid Player UUID
+     * @param reasonKey Message key for the cancellation reason (e.g., "cancel-moved", "cancel-damage", "cancel-disconnected")
      */
-    public void cancelTeleport(UUID uuid, String reason) {
+    public void cancelTeleport(UUID uuid, String reasonKey) {
         TeleportTask task = pendingTeleports.remove(uuid);
         if (task != null && !task.cancelled) {
             task.cancelled = true;
@@ -1379,7 +1387,9 @@ public class MenuManager implements Listener {
             }
             Player player = Bukkit.getPlayer(uuid);
             if (player != null) {
-                player.sendMessage(plugin.getConfigManager().getMessagePrefix() + hex("#FF5555") + "Teleport cancelled: " + reason);
+                // Get the reason message using the key
+                String reasonMessage = messages.getMessage("teleport." + reasonKey);
+                messages.send(player, "teleport.cancelled", "reason", reasonMessage);
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             }
         }
@@ -1394,7 +1404,7 @@ public class MenuManager implements Listener {
         // Charge cost
         if (cost > 0 && plugin.getEconomyIntegration() != null && plugin.getEconomyIntegration().isEnabled()) {
             if (!plugin.getEconomyIntegration().withdraw(player, (int) cost)) {
-                player.sendMessage(config.getMessagePrefix() + hex("#FF5555") + "Transaction failed!");
+                messages.send(player, "teleport.transaction-failed");
                 return;
             }
         }
@@ -1403,7 +1413,7 @@ public class MenuManager implements Listener {
         player.teleport(destination);
         teleportCooldowns.put(player.getUniqueId(), System.currentTimeMillis());
         
-        player.sendMessage(config.getMessagePrefix() + hex("#55FF55") + "Teleported to your base!");
+        messages.send(player, "teleport.success");
         player.playSound(destination, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
     }
     
@@ -1436,7 +1446,7 @@ public class MenuManager implements Listener {
         
         // Check if actually moved (not just head rotation)
         if (from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ()) {
-            cancelTeleport(uuid, "You moved!");
+            cancelTeleport(uuid, "cancel-moved");
         }
     }
     
@@ -1449,7 +1459,7 @@ public class MenuManager implements Listener {
         UUID uuid = player.getUniqueId();
         TeleportTask task = pendingTeleports.get(uuid);
         if (task != null && !task.cancelled) {
-            cancelTeleport(uuid, "You took damage!");
+            cancelTeleport(uuid, "cancel-damage");
         }
     }
     

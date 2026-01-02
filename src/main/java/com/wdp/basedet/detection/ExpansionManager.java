@@ -2,6 +2,7 @@ package com.wdp.basedet.detection;
 
 import com.wdp.basedet.WDPBaseDetPlugin;
 import com.wdp.basedet.config.ConfigManager;
+import com.wdp.basedet.config.MessageManager;
 import com.wdp.basedet.model.Base;
 import com.wdp.basedet.model.BoundingBox;
 import org.bukkit.Bukkit;
@@ -20,6 +21,7 @@ public class ExpansionManager {
     
     private final WDPBaseDetPlugin plugin;
     private final ConfigManager config;
+    private final MessageManager messages;
     
     // Track expansion activity per base
     private final Map<Long, ExpansionData> expansionTracking = new ConcurrentHashMap<>();
@@ -30,6 +32,7 @@ public class ExpansionManager {
     public ExpansionManager(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfigManager();
+        this.messages = plugin.getMessages();
     }
     
     /**
@@ -138,10 +141,10 @@ public class ExpansionManager {
         
         // Send message
         player.sendMessage("");
-        player.sendMessage(config.getMessagePrefix() + ChatColor.YELLOW + "⬢ Base Expansion Detected!");
-        player.sendMessage(ChatColor.GRAY + "  Your base has grown by " + ChatColor.WHITE + blockCount + " blocks");
-        player.sendMessage(ChatColor.GRAY + "  New size: " + ChatColor.WHITE + newBounds.getWidth() + "x" + 
-                newBounds.getLength() + "x" + newBounds.getHeight());
+        messages.send(player, "expansion.expansion-detected");
+        messages.sendRaw(player, "expansion.blocks-grown", "count", String.valueOf(blockCount));
+        messages.sendRaw(player, "expansion.new-size", 
+                "dimensions", newBounds.getWidth() + "x" + newBounds.getLength() + "x" + newBounds.getHeight());
         player.sendMessage("");
         
         // Create clickable buttons
@@ -173,7 +176,7 @@ public class ExpansionManager {
         ExpansionPrompt prompt = activePrompts.get(uuid);
         
         if (prompt == null) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + "No pending expansion to confirm.");
+            messages.send(player, "expansion.no-pending-expansion");
             return false;
         }
         
@@ -191,9 +194,7 @@ public class ExpansionManager {
         double reward = config.getExpansionReward();
         if (reward > 0 && plugin.getEconomyIntegration() != null) {
             plugin.getEconomyIntegration().deposit(player, reward);
-            player.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + 
-                    "You received " + ChatColor.GOLD + reward + " SkillCoins" + 
-                    ChatColor.GREEN + " for confirming the expansion!");
+            messages.send(player, "expansion.expansion-reward", "amount", String.format("%.0f", reward));
         }
         
         // Show detailed size info
@@ -203,14 +204,14 @@ public class ExpansionManager {
         int addedVolume = newVolume - oldVolume;
         
         player.sendMessage("");
-        player.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + "✓ Base Expanded!");
-        player.sendMessage(ChatColor.GRAY + "  Old size: " + ChatColor.WHITE + 
-                oldBounds.getWidth() + "×" + oldBounds.getLength() + "×" + oldBounds.getHeight() + 
-                ChatColor.GRAY + " (" + ChatColor.GOLD + String.format("%,d", oldVolume) + ChatColor.GRAY + " blocks)");
-        player.sendMessage(ChatColor.GRAY + "  New size: " + ChatColor.GREEN + 
-                newBounds.getWidth() + "×" + newBounds.getLength() + "×" + newBounds.getHeight() + 
-                ChatColor.GRAY + " (" + ChatColor.GREEN + String.format("%,d", newVolume) + ChatColor.GRAY + " blocks)");
-        player.sendMessage(ChatColor.GRAY + "  Added: " + ChatColor.GREEN + "+" + String.format("%,d", addedVolume) + ChatColor.GRAY + " blocks");
+        messages.send(player, "expansion.expansion-confirmed");
+        messages.sendRaw(player, "expansion.old-size", 
+                "dimensions", oldBounds.getWidth() + "×" + oldBounds.getLength() + "×" + oldBounds.getHeight(),
+                "volume", String.format("%,d", oldVolume));
+        messages.sendRaw(player, "expansion.new-size-detailed", 
+                "dimensions", newBounds.getWidth() + "×" + newBounds.getLength() + "×" + newBounds.getHeight(),
+                "volume", String.format("%,d", newVolume));
+        messages.sendRaw(player, "expansion.blocks-added", "count", String.format("%,d", addedVolume));
         player.sendMessage("");
         
         cleanupPrompt(uuid);
@@ -225,15 +226,14 @@ public class ExpansionManager {
         ExpansionPrompt prompt = activePrompts.get(uuid);
         
         if (prompt == null) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + "No pending expansion to deny.");
+            messages.send(player, "expansion.no-expansion-to-deny");
             return false;
         }
         
         // Clear expansion tracking but keep the base
         expansionTracking.remove(prompt.getBase().getId());
         
-        player.sendMessage(config.getMessagePrefix() + ChatColor.YELLOW + 
-                "Expansion cancelled. Your base size remains unchanged.");
+        messages.send(player, "expansion.expansion-denied");
         
         cleanupPrompt(uuid);
         return true;
@@ -314,8 +314,7 @@ public class ExpansionManager {
             timerTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (activePrompts.containsKey(player.getUniqueId())) {
                     denyExpansion(player);
-                    player.sendMessage(config.getMessagePrefix() + ChatColor.YELLOW + 
-                            "Expansion prompt expired. Keeping current base size.");
+                    messages.send(player, "expansion.expansion-expired");
                 }
             }, 60 * 20L);
         }

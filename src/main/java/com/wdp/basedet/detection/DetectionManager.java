@@ -2,6 +2,7 @@ package com.wdp.basedet.detection;
 
 import com.wdp.basedet.WDPBaseDetPlugin;
 import com.wdp.basedet.config.ConfigManager;
+import com.wdp.basedet.config.MessageManager;
 import com.wdp.basedet.model.Base;
 import com.wdp.basedet.model.BoundingBox;
 import org.bukkit.Bukkit;
@@ -27,6 +28,7 @@ public class DetectionManager {
     
     private final WDPBaseDetPlugin plugin;
     private final ConfigManager config;
+    private final MessageManager messages;
     
     // Players currently in detection prompt
     private final Map<UUID, DetectionPrompt> activePrompts = new ConcurrentHashMap<>();
@@ -37,6 +39,7 @@ public class DetectionManager {
     public DetectionManager(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfigManager();
+        this.messages = plugin.getMessages();
     }
     
     // ==================== PUBLIC API METHODS ====================
@@ -258,8 +261,7 @@ public class DetectionManager {
         // Analyze interactions
         BoundingBox bounds = analyzeInteractions(uuid);
         if (bounds == null) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Not enough activity detected to determine a base location.");
+            messages.send(player, "commands.not-enough-for-detection");
             return;
         }
         
@@ -419,8 +421,7 @@ public class DetectionManager {
             double distance = calculateDistance(newBounds, existing);
             
             if (distance < minDistance) {
-                player.sendMessage(config.getMessagePrefix() + ChatColor.YELLOW + 
-                        "This location is too close to one of your existing bases.");
+                messages.send(player, "detection.too-close-to-base");
                 return false;
             }
         }
@@ -466,9 +467,9 @@ public class DetectionManager {
         
         // Send message with clickable buttons
         player.sendMessage("");
-        player.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + "⬢ Base Detected!");
-        player.sendMessage(ChatColor.GRAY + "  Location: " + ChatColor.WHITE + pendingBase.getLocationString());
-        player.sendMessage(ChatColor.GRAY + "  Size: " + ChatColor.WHITE + pendingBase.getDimensionsString() + " blocks");
+        messages.send(player, "detection.base-detected");
+        messages.sendRaw(player, "detection.location-info", "location", pendingBase.getLocationString());
+        messages.sendRaw(player, "detection.size-info", "size", pendingBase.getDimensionsString());
         player.sendMessage("");
         
         // Create clickable buttons using Paper's Component API
@@ -486,7 +487,7 @@ public class DetectionManager {
                 .build();
         
         player.sendMessage(message);
-        player.sendMessage(ChatColor.GRAY + "  Auto-confirms in " + (config.getAutoConfirmTime() / 60) + " minutes");
+        messages.sendRaw(player, "detection.auto-confirm-timer", "minutes", String.valueOf(config.getAutoConfirmTime() / 60));
         player.sendMessage("");
         
         // Start auto-confirm timer
@@ -518,8 +519,7 @@ public class DetectionManager {
                     .orElse(null);
             if (oldest != null) {
                 plugin.getDatabaseManager().deleteBase(oldest.getId());
-                player.sendMessage(config.getMessagePrefix() + ChatColor.YELLOW + 
-                        "Your oldest base has been abandoned to make room for this one.");
+                messages.send(player, "detection.old-base-abandoned");
             }
         }
         
@@ -535,24 +535,22 @@ public class DetectionManager {
         double reward = manual ? config.getConfirmReward() : config.getAutoConfirmReward();
         if (reward > 0 && plugin.getEconomyIntegration() != null) {
             plugin.getEconomyIntegration().deposit(player, reward);
-            player.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + 
-                    "You received " + ChatColor.GOLD + reward + " SkillCoins" + 
-                    ChatColor.GREEN + " for " + (manual ? "confirming" : "auto-confirming") + " your base!");
+            String rewardPath = manual ? "detection.reward-confirm" : "detection.reward-auto-confirm";
+            messages.send(player, rewardPath, "amount", String.format("%.0f", reward));
         }
         
         // Send confirmation message with size info
         BoundingBox bounds = base.getBounds();
         int volume = bounds.getWidth() * bounds.getLength() * bounds.getHeight();
         
+        String confirmType = manual ? messages.get("detection.base-confirmed-manual") : messages.get("detection.base-confirmed-auto");
         player.sendMessage("");
-        player.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + "✓ Base " + 
-                (manual ? "confirmed" : "auto-confirmed") + "!");
-        player.sendMessage(ChatColor.GRAY + "  Size: " + ChatColor.WHITE + 
-                bounds.getWidth() + "×" + bounds.getLength() + "×" + bounds.getHeight() + 
-                ChatColor.GRAY + " (" + ChatColor.GOLD + String.format("%,d", volume) + ChatColor.GRAY + " blocks)");
-        player.sendMessage(ChatColor.GRAY + "  Your base is now protected when you're offline.");
-        player.sendMessage(ChatColor.GRAY + "  Use " + ChatColor.WHITE + "/trust" + 
-                ChatColor.GRAY + " to manage trusted players.");
+        messages.send(player, "detection.base-confirmed", "type", confirmType);
+        messages.sendRaw(player, "detection.size-confirmed", 
+                "dimensions", bounds.getWidth() + "×" + bounds.getLength() + "×" + bounds.getHeight(),
+                "volume", String.format("%,d", volume));
+        messages.sendRaw(player, "detection.protection-info");
+        messages.sendRaw(player, "detection.trust-info");
         player.sendMessage("");
         
         // Cleanup
@@ -579,14 +577,11 @@ public class DetectionManager {
         double reward = config.getDenyReward();
         if (reward > 0 && plugin.getEconomyIntegration() != null) {
             plugin.getEconomyIntegration().deposit(player, reward);
-            player.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + 
-                    "You received " + ChatColor.GOLD + reward + " SkillCoins" + 
-                    ChatColor.GREEN + " for responding to the detection prompt.");
+            messages.send(player, "detection.reward-deny", "amount", String.format("%.0f", reward));
         }
         
         // Send message
-        player.sendMessage(config.getMessagePrefix() + ChatColor.YELLOW + 
-                "Base detection cancelled. Keep building!");
+        messages.send(player, "detection.base-denied");
         
         // Cleanup
         cleanupPrompt(uuid);
@@ -653,9 +648,7 @@ public class DetectionManager {
             prompt.resumeTimer();
             
             // Remind player about pending detection
-            player.sendMessage(config.getMessagePrefix() + ChatColor.YELLOW + 
-                    "You have a pending base detection! Use " + ChatColor.WHITE + 
-                    "/basedet confirm" + ChatColor.YELLOW + " or " + ChatColor.WHITE + "/basedet deny");
+            messages.send(player, "detection.pending-detection-reminder");
             
             // Re-show particles
             if (config.showParticlesDuringPrompt()) {
@@ -695,8 +688,7 @@ public class DetectionManager {
                 
                 // Notify at certain intervals
                 if (remainingSeconds == 300 || remainingSeconds == 60 || remainingSeconds == 30) {
-                    player.sendMessage(config.getMessagePrefix() + ChatColor.YELLOW + 
-                            "Base will auto-confirm in " + formatTime(remainingSeconds));
+                    messages.send(player, "detection.auto-confirm-warning", "time", formatTime(remainingSeconds));
                 }
                 
                 if (remainingSeconds <= 0) {

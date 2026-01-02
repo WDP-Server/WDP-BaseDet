@@ -1,6 +1,7 @@
 package com.wdp.basedet.listener;
 
 import com.wdp.basedet.WDPBaseDetPlugin;
+import com.wdp.basedet.config.MessageManager;
 import com.wdp.basedet.model.Base;
 import com.wdp.basedet.model.TrustEntry;
 import com.wdp.basedet.protection.ProtectionManager;
@@ -29,6 +30,7 @@ public class ProtectionListener implements Listener {
     
     private final WDPBaseDetPlugin plugin;
     private final ProtectionManager protectionManager;
+    private final MessageManager messages;
     
     // Track players who have been notified about combat mechanics (avoid spam)
     private final Map<UUID, Long> combatNotifications = new ConcurrentHashMap<>();
@@ -37,6 +39,7 @@ public class ProtectionListener implements Listener {
     public ProtectionListener(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
         this.protectionManager = plugin.getProtectionManager();
+        this.messages = plugin.getMessages();
     }
     
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -170,14 +173,13 @@ public class ProtectionListener implements Listener {
         
         // Notify player about combat mechanics
         if (plugin.getConfigManager().isNotifyPlayersAboutCombat()) {
-            player.sendMessage(plugin.getConfigManager().getMessage("combat-enter"));
-            player.sendMessage(ChatColor.GRAY + "  Combat in this base is allowed while tagged!");
+            messages.send(player, "protection.combat-enter");
+            messages.sendRaw(player, "protection.combat-in-base");
             
             // Notify base owner if online
             Player owner = Bukkit.getPlayer(base.getOwnerUUID());
             if (owner != null && owner.isOnline()) {
-                owner.sendMessage(plugin.getConfigManager().getMessagePrefix() + ChatColor.RED + 
-                        "⚔ " + player.getName() + " entered your base while in combat!");
+                messages.send(owner, "protection.owner-combat-notification", "player", player.getName());
             }
         }
     }
@@ -245,6 +247,6 @@ public class ProtectionListener implements Listener {
      * Send protection message to player
      */
     private void sendProtectionMessage(Player player) {
-        player.sendMessage(plugin.getConfigManager().getMessage("protection-active"));
+        messages.send(player, "protection.protection-active");
     }
 }

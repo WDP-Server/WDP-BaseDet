@@ -2,6 +2,7 @@ package com.wdp.basedet.command;
 
 import com.wdp.basedet.WDPBaseDetPlugin;
 import com.wdp.basedet.config.ConfigManager;
+import com.wdp.basedet.config.MessageManager;
 import com.wdp.basedet.model.Base;
 import com.wdp.basedet.model.TrustEntry;
 import org.bukkit.Bukkit;
@@ -24,28 +25,30 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
     
     private final WDPBaseDetPlugin plugin;
     private final ConfigManager config;
+    private final MessageManager messages;
     
     public TrustCommand(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfigManager();
+        this.messages = plugin.getMessages();
     }
     
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "This command can only be used by players!");
+            messages.send(sender, "commands.players-only");
             return true;
         }
         
         if (!player.hasPermission("basedet.user.trust")) {
-            player.sendMessage(config.getMessage("no-permission"));
+            messages.send(player, "commands.no-permission");
             return true;
         }
         
         // Get player's bases
         List<Base> bases = plugin.getDatabaseManager().getPlayerBases(player.getUniqueId());
         if (bases.isEmpty()) {
-            player.sendMessage(config.getMessage("no-base"));
+            messages.send(player, "commands.no-base");
             return true;
         }
         
@@ -72,8 +75,7 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
     
     private void handleAdd(Player player, String[] args, List<Base> bases) {
         if (args.length < 2) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Usage: /trust add <player>");
+            messages.send(player, "trust.add-usage");
             return;
         }
         
@@ -83,14 +85,12 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
     private void handleQuickAdd(Player player, String targetName, List<Base> bases) {
         UUID targetUUID = plugin.getTrustManager().getPlayerUUID(targetName);
         if (targetUUID == null) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Player not found: " + targetName);
+            messages.send(player, "commands.player-not-found", "player", targetName);
             return;
         }
         
         if (targetUUID.equals(player.getUniqueId())) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "You can't trust yourself!");
+            messages.send(player, "trust.cant-trust-yourself");
             return;
         }
         
@@ -100,27 +100,24 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         }
         
         String resolvedName = plugin.getTrustManager().getPlayerName(targetUUID);
-        player.sendMessage(config.getMessage("trusted-added").replace("{player}", resolvedName));
+        messages.send(player, "trust.trusted-added", "player", resolvedName);
         
         // Notify the trusted player if online
         Player target = Bukkit.getPlayer(targetUUID);
         if (target != null && target.isOnline()) {
-            target.sendMessage(config.getMessagePrefix() + ChatColor.GREEN + 
-                    "You have been trusted by " + player.getName() + "!");
+            messages.send(target, "trust.trusted-by-notification", "owner", player.getName());
         }
     }
     
     private void handleRemove(Player player, String[] args, List<Base> bases) {
         if (args.length < 2) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Usage: /trust remove <player>");
+            messages.send(player, "trust.remove-usage");
             return;
         }
         
         UUID targetUUID = plugin.getTrustManager().getPlayerUUID(args[1]);
         if (targetUUID == null) {
-            player.sendMessage(config.getMessagePrefix() + ChatColor.RED + 
-                    "Player not found: " + args[1]);
+            messages.send(player, "commands.player-not-found", "player", args[1]);
             return;
         }
         
@@ -130,11 +127,11 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
         }
         
         String resolvedName = plugin.getTrustManager().getPlayerName(targetUUID);
-        player.sendMessage(config.getMessage("trusted-removed").replace("{player}", resolvedName));
+        messages.send(player, "trust.trusted-removed", "player", resolvedName);
     }
     
     private void handleList(Player player, List<Base> bases) {
-        player.sendMessage(config.getMessagePrefix() + ChatColor.AQUA + "Trusted Players:");
+        messages.send(player, "trust.trusted-players-header");
         
         boolean anyTrusted = false;
         for (Base base : bases) {
@@ -142,14 +139,14 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
             
             if (!trusted.isEmpty()) {
                 anyTrusted = true;
-                player.sendMessage(ChatColor.GRAY + "  Base at " + base.getLocationString() + ":");
+                messages.sendRaw(player, "trust.base-at-location", "location", base.getLocationString());
                 
                 for (TrustEntry entry : trusted) {
                     String name = plugin.getTrustManager().getPlayerName(entry.getTrustedUUID());
                     StringBuilder perms = new StringBuilder();
                     
                     // Online permissions
-                    perms.append(ChatColor.GREEN).append("Online: ");
+                    perms.append(messages.get("trust.online-label"));
                     if (entry.canBreakOnline()) perms.append("B");
                     if (entry.canPlaceOnline()) perms.append("P");
                     if (entry.canContainerOnline()) perms.append("C");
@@ -160,7 +157,7 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
                     if (entry.canDecorationOnline()) perms.append("A");
                     
                     // Offline permissions
-                    perms.append(ChatColor.YELLOW).append(" | Offline: ");
+                    perms.append(messages.get("trust.offline-label"));
                     if (entry.canBreakOffline()) perms.append("B");
                     if (entry.canPlaceOffline()) perms.append("P");
                     if (entry.canContainerOffline()) perms.append("C");
@@ -170,16 +167,15 @@ public class TrustCommand implements CommandExecutor, TabCompleter {
                     if (entry.canVehicleOffline()) perms.append("V");
                     if (entry.canDecorationOffline()) perms.append("A");
                     
-                    player.sendMessage(ChatColor.WHITE + "    - " + name);
-                    player.sendMessage(ChatColor.GRAY + "      " + perms);
+                    messages.sendRaw(player, "trust.player-entry", "name", name);
+                    messages.sendRaw(player, "trust.permissions-display", "permissions", perms.toString());
                 }
             }
         }
         
         if (!anyTrusted) {
-            player.sendMessage(ChatColor.GRAY + "  No trusted players yet.");
-            player.sendMessage(ChatColor.GRAY + "  Use " + ChatColor.WHITE + "/trust <player>" + 
-                    ChatColor.GRAY + " to add someone.");
+            messages.sendRaw(player, "trust.no-trusted-players");
+            messages.sendRaw(player, "trust.use-trust-command");
         }
     }
     

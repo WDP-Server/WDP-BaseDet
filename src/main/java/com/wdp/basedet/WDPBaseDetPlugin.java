@@ -4,6 +4,7 @@ import com.wdp.basedet.combat.CombatManager;
 import com.wdp.basedet.command.BaseDetCommand;
 import com.wdp.basedet.command.TrustCommand;
 import com.wdp.basedet.config.ConfigManager;
+import com.wdp.basedet.config.MessageManager;
 import com.wdp.basedet.database.DatabaseManager;
 import com.wdp.basedet.detection.DetectionManager;
 import com.wdp.basedet.detection.ExpansionManager;
@@ -41,6 +42,7 @@ public class WDPBaseDetPlugin extends JavaPlugin {
     
     // Managers
     private ConfigManager configManager;
+    private MessageManager messageManager;
     private DatabaseManager databaseManager;
     private DetectionManager detectionManager;
     private ExpansionManager expansionManager;
@@ -71,6 +73,9 @@ public class WDPBaseDetPlugin extends JavaPlugin {
         saveDefaultConfig();
         configManager = new ConfigManager(this);
         configManager.loadConfig();
+        
+        // Load messages
+        messageManager = new MessageManager(this);
         
         // Initialize database
         getLogger().info("Initializing database...");
@@ -243,6 +248,9 @@ public class WDPBaseDetPlugin extends JavaPlugin {
         getLogger().info("Reloading WDP-BaseDet...");
         reloadConfig();
         configManager.loadConfig();
+        if (messageManager != null) {
+            messageManager.reload();
+        }
         getLogger().info("✓ Configuration reloaded");
     }
     
@@ -253,6 +261,10 @@ public class WDPBaseDetPlugin extends JavaPlugin {
     
     public ConfigManager getConfigManager() {
         return configManager;
+    }
+    
+    public MessageManager getMessages() {
+        return messageManager;
     }
     
     public DatabaseManager getDatabaseManager() {

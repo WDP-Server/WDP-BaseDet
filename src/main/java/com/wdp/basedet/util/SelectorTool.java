@@ -2,6 +2,7 @@ package com.wdp.basedet.util;
 
 import com.wdp.basedet.WDPBaseDetPlugin;
 import com.wdp.basedet.config.ConfigManager;
+import com.wdp.basedet.config.MessageManager;
 import com.wdp.basedet.model.Base;
 import com.wdp.basedet.model.BoundingBox;
 import net.md_5.bungee.api.ChatColor;
@@ -36,6 +37,7 @@ public class SelectorTool implements Listener {
     
     private final WDPBaseDetPlugin plugin;
     private final ConfigManager config;
+    private final MessageManager messages;
     private final NamespacedKey selectorKey;
     
     // Selection states per player
@@ -54,6 +56,7 @@ public class SelectorTool implements Listener {
     public SelectorTool(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfigManager();
+        this.messages = plugin.getMessages();
         this.selectorKey = new NamespacedKey(plugin, "selector_tool");
     }
     
@@ -66,7 +69,7 @@ public class SelectorTool implements Listener {
         // Check if player already has one
         for (ItemStack item : player.getInventory().getContents()) {
             if (isSelectorTool(item)) {
-                player.sendMessage(formatMessage("&eYou already have a &6Base Selector Tool&e!"));
+                messages.send(player, "selector.already-have-tool");
                 return;
             }
         }
@@ -142,7 +145,7 @@ public class SelectorTool implements Listener {
                 .orElse(null);
         
         if (currentBase == null) {
-            player.sendMessage(formatMessage("&cYou don't have a confirmed base in this world!"));
+            messages.send(player, "selector.no-base-in-world");
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return;
         }
@@ -164,7 +167,7 @@ public class SelectorTool implements Listener {
         } else if (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK) {
             // Cancel selection
             cancelSelection(player);
-            player.sendMessage(formatMessage("&eSelection cancelled."));
+            messages.send(player, "selector.selection-cancelled");
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.5f);
         }
     }
@@ -178,8 +181,10 @@ public class SelectorTool implements Listener {
             state.setCorner1(clicked.getX(), clicked.getY(), clicked.getZ());
             
             player.sendMessage("");
-            player.sendMessage(hex("#55FF55") + "▸ " + hex("#FFFFFF") + "Corner 1 set: " + 
-                    hex("#55FF55") + clicked.getX() + ", " + clicked.getY() + ", " + clicked.getZ());
+            messages.sendRaw(player, "selector.corner-1-set", 
+                    "x", String.valueOf(clicked.getX()),
+                    "y", String.valueOf(clicked.getY()),
+                    "z", String.valueOf(clicked.getZ()));
             
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.5f);
             
@@ -195,8 +200,10 @@ public class SelectorTool implements Listener {
             state.setCorner2(clicked.getX(), clicked.getY(), clicked.getZ());
             
             player.sendMessage("");
-            player.sendMessage(hex("#FF5555") + "▸ " + hex("#FFFFFF") + "Corner 2 set: " +
-                    hex("#FF5555") + clicked.getX() + ", " + clicked.getY() + ", " + clicked.getZ());
+            messages.sendRaw(player, "selector.corner-2-set", 
+                    "x", String.valueOf(clicked.getX()),
+                    "y", String.valueOf(clicked.getY()),
+                    "z", String.valueOf(clicked.getZ()));
             
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.2f);
             
@@ -414,23 +421,20 @@ public class SelectorTool implements Listener {
         int volume = bounds.getWidth() * bounds.getLength() * bounds.getHeight();
         
         player.sendMessage("");
-        player.sendMessage(hex("#FFD700") + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        player.sendMessage(hex("#FFD700") + "  ✦ " + hex("#FFFFFF") + "Current Base Information");
-        player.sendMessage(hex("#FFD700") + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        messages.sendRaw(player, "selector.info-header");
+        messages.sendRaw(player, "selector.current-base-title");
+        messages.sendRaw(player, "selector.info-header");
         player.sendMessage("");
-        player.sendMessage(hex("#AAAAAA") + "  World: " + hex("#FFFFFF") + base.getWorldName());
-        player.sendMessage(hex("#AAAAAA") + "  Location: " + hex("#55FFFF") + 
-                bounds.getMinX() + ", " + bounds.getMinY() + ", " + bounds.getMinZ() + 
-                hex("#AAAAAA") + " → " + hex("#55FFFF") +
-                bounds.getMaxX() + ", " + bounds.getMaxY() + ", " + bounds.getMaxZ());
+        messages.sendRaw(player, "selector.info-world", "world", base.getWorldName());
+        messages.sendRaw(player, "selector.info-location", 
+                "from", bounds.getMinX() + ", " + bounds.getMinY() + ", " + bounds.getMinZ(),
+                "to", bounds.getMaxX() + ", " + bounds.getMaxY() + ", " + bounds.getMaxZ());
         player.sendMessage("");
-        player.sendMessage(hex("#AAAAAA") + "  Size: " + hex("#55FF55") + 
-                bounds.getWidth() + hex("#AAAAAA") + " × " + 
-                hex("#55FF55") + bounds.getLength() + hex("#AAAAAA") + " × " + 
-                hex("#55FF55") + bounds.getHeight());
-        player.sendMessage(hex("#AAAAAA") + "  Volume: " + hex("#FFD700") + String.format("%,d", volume) + " blocks");
+        messages.sendRaw(player, "selector.info-size", 
+                "dimensions", bounds.getWidth() + " × " + bounds.getLength() + " × " + bounds.getHeight());
+        messages.sendRaw(player, "selector.info-volume", "volume", String.format("%,d", volume));
         player.sendMessage("");
-        player.sendMessage(hex("#FFD700") + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        messages.sendRaw(player, "selector.info-header");
         player.sendMessage("");
     }
     
@@ -456,61 +460,62 @@ public class SelectorTool implements Listener {
         }
         
         player.sendMessage("");
-        player.sendMessage(hex("#FFD700") + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        player.sendMessage(hex("#FFD700") + "  ✦ " + hex("#FFFFFF") + "Selection Preview");
-        player.sendMessage(hex("#FFD700") + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        messages.sendRaw(player, "selector.info-header");
+        messages.sendRaw(player, "selector.preview-title");
+        messages.sendRaw(player, "selector.info-header");
         player.sendMessage("");
         
         // Old size
-        player.sendMessage(hex("#55FFFF") + "  Current: " + hex("#AAAAAA") + 
-                oldBounds.getWidth() + "×" + oldBounds.getLength() + "×" + oldBounds.getHeight() +
-                hex("#666666") + " (" + String.format("%,d", oldVolume) + " blocks)");
+        messages.sendRaw(player, "selector.preview-current", 
+                "dimensions", oldBounds.getWidth() + "×" + oldBounds.getLength() + "×" + oldBounds.getHeight(),
+                "volume", String.format("%,d", oldVolume));
         
         // New size
         String sizeColor = isValid ? "#FFAA00" : "#FF5555";
-        player.sendMessage(hex(sizeColor) + "  New: " + hex("#AAAAAA") + 
-                newBounds.getWidth() + "×" + newBounds.getLength() + "×" + newBounds.getHeight() +
-                hex("#666666") + " (" + String.format("%,d", newVolume) + " blocks)");
+        messages.sendRaw(player, "selector.preview-new", 
+                "color", hex(sizeColor),
+                "dimensions", newBounds.getWidth() + "×" + newBounds.getLength() + "×" + newBounds.getHeight(),
+                "volume", String.format("%,d", newVolume));
         player.sendMessage("");
         
         // Change indicator
         if (difference > 0) {
-            player.sendMessage(hex("#55FF55") + "  ▲ Expanding: +" + String.format("%,d", difference) + " blocks");
-            player.sendMessage(hex("#FFD700") + "  ⬤ Cost: " + hex("#FFFFFF") + String.format("%,.0f", cost) + " SkillCoins");
+            messages.sendRaw(player, "selector.preview-expanding", "blocks", String.format("%,d", difference));
+            messages.sendRaw(player, "selector.preview-cost", "cost", String.format("%,.0f", cost));
         } else if (difference < 0) {
-            player.sendMessage(hex("#FF5555") + "  ▼ Shrinking: " + String.format("%,d", difference) + " blocks");
+            messages.sendRaw(player, "selector.preview-shrinking", "blocks", String.format("%,d", difference));
             if (config.isShrinkFree()) {
-                player.sendMessage(hex("#55FF55") + "  ⬤ Cost: FREE");
+                messages.sendRaw(player, "selector.preview-cost-free");
             } else {
-                player.sendMessage(hex("#FFD700") + "  ⬤ Cost: " + hex("#FFFFFF") + String.format("%,.0f", cost) + " SkillCoins");
+                messages.sendRaw(player, "selector.preview-cost", "cost", String.format("%,.0f", cost));
             }
         } else {
-            player.sendMessage(hex("#FFFF55") + "  ◆ Same size - location change only");
-            player.sendMessage(hex("#55FF55") + "  ⬤ Cost: FREE");
+            messages.sendRaw(player, "selector.preview-same-size");
+            messages.sendRaw(player, "selector.preview-cost-free");
         }
         
         player.sendMessage("");
         
         // Validation messages
         if (!isValid) {
-            player.sendMessage(hex("#FF5555") + "  ⚠ INVALID SELECTION:");
+            messages.sendRaw(player, "selector.preview-invalid");
             if (newBounds.getWidth() > config.getMaxBaseWidth() ||
                 newBounds.getLength() > config.getMaxBaseLength() ||
                 newBounds.getHeight() > config.getMaxBaseHeight()) {
-                player.sendMessage(hex("#FF5555") + "    • Exceeds maximum size limits!");
+                messages.sendRaw(player, "selector.preview-exceeds-max");
             }
             if (newBounds.getWidth() < config.getMinBaseWidth() ||
                 newBounds.getLength() < config.getMinBaseLength() ||
                 newBounds.getHeight() < config.getMinBaseHeight()) {
-                player.sendMessage(hex("#FF5555") + "    • Below minimum size limits!");
+                messages.sendRaw(player, "selector.preview-below-min");
             }
             player.sendMessage("");
         }
         
-        player.sendMessage(hex("#AAAAAA") + "  " + hex("#FFFF55") + "Sneak + Left Click" + hex("#AAAAAA") + " to confirm");
-        player.sendMessage(hex("#AAAAAA") + "  " + hex("#FFFF55") + "Sneak + Right Click" + hex("#AAAAAA") + " to cancel");
+        messages.sendRaw(player, "selector.preview-confirm-hint");
+        messages.sendRaw(player, "selector.preview-cancel-hint");
         player.sendMessage("");
-        player.sendMessage(hex("#FFD700") + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        messages.sendRaw(player, "selector.info-header");
         player.sendMessage("");
         
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 0.7f, 1.0f);
@@ -521,7 +526,7 @@ public class SelectorTool implements Listener {
      */
     private void applyChanges(Player player, SelectionState state, Base currentBase) {
         if (!state.isComplete()) {
-            player.sendMessage(formatMessage("&cYou must set both corners first!"));
+            messages.send(player, "selector.must-set-both-corners");
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return;
         }
@@ -531,7 +536,7 @@ public class SelectorTool implements Listener {
         
         // Validate
         if (!validateSelection(newBounds)) {
-            player.sendMessage(formatMessage("&cSelection exceeds size limits! Check the preview."));
+            messages.send(player, "selector.exceeds-limits");
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 0.8f);
             return;
         }
@@ -551,8 +556,8 @@ public class SelectorTool implements Listener {
         // Check if player can afford
         if (cost > 0 && plugin.getEconomyIntegration() != null) {
             if (!plugin.getEconomyIntegration().hasBalance(player, cost)) {
-                player.sendMessage(formatMessage("&cYou don't have enough SkillCoins!"));
-                player.sendMessage(hex("#AAAAAA") + "  Required: " + hex("#FFD700") + String.format("%,.0f", cost) + " SkillCoins");
+                messages.send(player, "selector.not-enough-coins");
+                messages.sendRaw(player, "selector.coins-required", "cost", String.format("%,.0f", cost));
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 0.5f);
                 return;
             }
@@ -567,14 +572,14 @@ public class SelectorTool implements Listener {
         
         // Success message
         player.sendMessage("");
-        player.sendMessage(hex("#55FF55") + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        player.sendMessage(hex("#55FF55") + "  ✓ " + hex("#FFFFFF") + "Base boundaries updated!");
-        player.sendMessage(hex("#55FF55") + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        messages.sendRaw(player, "selector.success-header");
+        messages.sendRaw(player, "selector.success-title");
+        messages.sendRaw(player, "selector.success-header");
         player.sendMessage("");
-        player.sendMessage(hex("#AAAAAA") + "  New size: " + hex("#FFFFFF") + 
-                newBounds.getWidth() + " × " + newBounds.getLength() + " × " + newBounds.getHeight());
+        messages.sendRaw(player, "selector.success-size", 
+                "dimensions", newBounds.getWidth() + " × " + newBounds.getLength() + " × " + newBounds.getHeight());
         if (cost > 0) {
-            player.sendMessage(hex("#AAAAAA") + "  Charged: " + hex("#FFD700") + String.format("%,.0f", cost) + " SkillCoins");
+            messages.sendRaw(player, "selector.success-charged", "cost", String.format("%,.0f", cost));
         }
         player.sendMessage("");
         
@@ -625,20 +630,20 @@ public class SelectorTool implements Listener {
      */
     private void sendToolInstructions(Player player) {
         player.sendMessage("");
-        player.sendMessage(hex("#FFD700") + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        player.sendMessage(hex("#FFD700") + "  ✦ " + hex("#FFFFFF") + "Base Selector Tool");
-        player.sendMessage(hex("#FFD700") + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        messages.sendRaw(player, "selector.info-header");
+        messages.sendRaw(player, "selector.instructions-title");
+        messages.sendRaw(player, "selector.info-header");
         player.sendMessage("");
-        player.sendMessage(hex("#55FF55") + "  ▸ " + hex("#FFFF55") + "Left Click Block" + hex("#AAAAAA") + " - Set corner 1 " + hex("#55FF55") + "(green)");
-        player.sendMessage(hex("#FF5555") + "  ▸ " + hex("#FFFF55") + "Right Click Block" + hex("#AAAAAA") + " - Set corner 2 " + hex("#FF5555") + "(red)");
+        messages.sendRaw(player, "selector.instructions-left-block");
+        messages.sendRaw(player, "selector.instructions-right-block");
         player.sendMessage("");
-        player.sendMessage(hex("#AAAAAA") + "  ▸ " + hex("#FFFF55") + "Left Click Air" + hex("#AAAAAA") + " - View current base");
-        player.sendMessage(hex("#AAAAAA") + "  ▸ " + hex("#FFFF55") + "Right Click Air" + hex("#AAAAAA") + " - View selection");
+        messages.sendRaw(player, "selector.instructions-left-air");
+        messages.sendRaw(player, "selector.instructions-right-air");
         player.sendMessage("");
-        player.sendMessage(hex("#55FFFF") + "  ▸ " + hex("#FFFF55") + "Sneak + Left" + hex("#AAAAAA") + " - Confirm changes");
-        player.sendMessage(hex("#FFAAAA") + "  ▸ " + hex("#FFFF55") + "Sneak + Right" + hex("#AAAAAA") + " - Cancel");
+        messages.sendRaw(player, "selector.instructions-sneak-left");
+        messages.sendRaw(player, "selector.instructions-sneak-right");
         player.sendMessage("");
-        player.sendMessage(hex("#FFD700") + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        messages.sendRaw(player, "selector.info-header");
         player.sendMessage("");
     }
     
