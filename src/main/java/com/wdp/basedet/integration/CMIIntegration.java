@@ -70,8 +70,8 @@ public class CMIIntegration {
         }
         
         try {
-            // Try using CMI's API
-            Class<?> cmiUserClass = Class.forName("com.Zrips.CMI.Containers.CMIUser");
+            // Verify CMI classes exist
+            Class.forName("com.Zrips.CMI.Containers.CMIUser");
             Method getUser = cmiPlugin.getClass().getMethod("getUser", Player.class);
             Object user = getUser.invoke(cmiPlugin, player);
             
@@ -111,7 +111,7 @@ public class CMIIntegration {
         }
         
         try {
-            Class<?> cmiUserClass = Class.forName("com.Zrips.CMI.Containers.CMIUser");
+            Class.forName("com.Zrips.CMI.Containers.CMIUser");
             Method getUser = cmiPlugin.getClass().getMethod("getUser", Player.class);
             Object user = getUser.invoke(cmiPlugin, player);
             

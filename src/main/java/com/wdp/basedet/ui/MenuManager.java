@@ -1388,7 +1388,7 @@ public class MenuManager implements Listener {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null) {
                 // Get the reason message using the key
-                String reasonMessage = messages.getMessage("teleport." + reasonKey);
+                String reasonMessage = messages.get("teleport." + reasonKey);
                 messages.send(player, "teleport.cancelled", "reason", reasonMessage);
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             }

@@ -415,17 +415,6 @@ public class UnifiedMenuManager {
     }
 
     /**
-     * Helper method to get integer from config map
-     */
-    private Integer getInteger(Map<String, Object> config, String key) {
-        Object value = config.get(key);
-        if (value instanceof Number) {
-            return ((Number) value).intValue();
-        }
-        return null;
-    }
-
-    /**
      * Get the GlobalItems instance
      */
     public GlobalItems getGlobalItems() {

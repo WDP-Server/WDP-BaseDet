@@ -655,13 +655,6 @@ public class SelectorTool implements Listener {
     }
     
     /**
-     * Helper: Format message with prefix
-     */
-    private String formatMessage(String message) {
-        return config.getMessagePrefix() + org.bukkit.ChatColor.translateAlternateColorCodes('&', message);
-    }
-    
-    /**
      * Helper: Create hex color string
      */
     private String hex(String hexCode) {
