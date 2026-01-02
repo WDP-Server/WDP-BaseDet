@@ -308,20 +308,67 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleDebug(CommandSender sender) {
-        if (!sender.hasPermission("basedet.admin.debug")) {
-            messages.send(sender, "commands.no-permission");
+        if (!(sender instanceof Player player)) {
+            // Console gets system info
+            if (!sender.hasPermission("basedet.admin.debug")) {
+                messages.send(sender, "commands.no-permission");
+                return;
+            }
+            messages.send(sender, "commands.debug-info");
+            messages.sendRaw(sender, "commands.debug-database", "type", config.getDatabaseType());
+            messages.sendRaw(sender, "commands.debug-economy", "status", 
+                    String.valueOf(plugin.getEconomyIntegration() != null && plugin.getEconomyIntegration().isEnabled()));
+            messages.sendRaw(sender, "commands.debug-discord", "status", 
+                    String.valueOf(plugin.getDiscordIntegration() != null && plugin.getDiscordIntegration().isEnabled()));
+            messages.sendRaw(sender, "commands.debug-cmi", "status", 
+                    String.valueOf(plugin.getCmiIntegration() != null && plugin.getCmiIntegration().isEnabled()));
             return;
         }
         
-        // Toggle debug mode (would need to implement in config)
-        messages.send(sender, "commands.debug-info");
-        messages.sendRaw(sender, "commands.debug-database", "type", config.getDatabaseType());
-        messages.sendRaw(sender, "commands.debug-economy", "status", 
-                String.valueOf(plugin.getEconomyIntegration() != null && plugin.getEconomyIntegration().isEnabled()));
-        messages.sendRaw(sender, "commands.debug-discord", "status", 
-                String.valueOf(plugin.getDiscordIntegration() != null && plugin.getDiscordIntegration().isEnabled()));
-        messages.sendRaw(sender, "commands.debug-cmi", "status", 
-                String.valueOf(plugin.getCmiIntegration() != null && plugin.getCmiIntegration().isEnabled()));
+        // Player toggles live debug mode
+        if (!player.hasPermission("basedet.user.debug") && !player.hasPermission("basedet.admin.debug")) {
+            messages.send(player, "commands.no-permission");
+            return;
+        }
+        
+        // Toggle debug mode for this player
+        boolean enabled = plugin.getClusterManager().toggleDebug(player.getUniqueId());
+        
+        if (enabled) {
+            player.sendMessage("§8[BaseDet] §aDebug mode enabled!");
+            player.sendMessage("§7You will see live messages about:");
+            player.sendMessage("§7 • Block placements and their effect on score");
+            player.sendMessage("§7 • Mining detection status");
+            player.sendMessage("§7 • Cluster creation and removal");
+            player.sendMessage("§7 • Score changes with cluster type");
+            player.sendMessage("§7Use §e/base debug §7again to disable.");
+            
+            // Show current cluster status
+            var clusters = plugin.getClusterManager().getClusters(player.getUniqueId());
+            if (!clusters.isEmpty()) {
+                player.sendMessage("§7Current clusters (" + clusters.size() + "/5):");
+                for (int i = 0; i < clusters.size(); i++) {
+                    var cluster = clusters.get(i);
+                    String typeColor = switch (cluster.getType()) {
+                        case BASE -> "§a";
+                        case MINING -> "§c";
+                        case HYBRID -> "§e";
+                        case UNKNOWN -> "§7";
+                    };
+                    player.sendMessage(String.format("§7 %d. %s[%s] §7at %s - Score: §f%.1f",
+                            i + 1,
+                            typeColor,
+                            cluster.getType().name(),
+                            cluster.getLocationString(),
+                            cluster.getScore()
+                    ));
+                }
+            } else {
+                player.sendMessage("§7No active clusters yet. Start building!");
+            }
+        } else {
+            player.sendMessage("§8[BaseDet] §7Debug mode disabled.");
+        }
     }
     
     private void handleForce(CommandSender sender, String[] args) {

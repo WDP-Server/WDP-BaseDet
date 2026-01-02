@@ -1,6 +1,7 @@
 package com.wdp.basedet.listener;
 
 import com.wdp.basedet.WDPBaseDetPlugin;
+import com.wdp.basedet.detection.ClusterManager;
 import com.wdp.basedet.detection.PlayerInteraction;
 import com.wdp.basedet.detection.PlayerInteraction.InteractionType;
 import com.wdp.basedet.detection.ScoreManager;
@@ -14,16 +15,20 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 
 /**
- * Listens for block events to track player activity for base detection
+ * Listens for block events to track player activity for base detection.
+ * 
+ * Updated to use ClusterManager for multi-location tracking and smart mining detection.
  */
 public class BlockListener implements Listener {
     
     private final WDPBaseDetPlugin plugin;
     private final ScoreManager scoreManager;
+    private final ClusterManager clusterManager;
     
     public BlockListener(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
         this.scoreManager = plugin.getScoreManager();
+        this.clusterManager = plugin.getClusterManager();
     }
     
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -65,8 +70,13 @@ public class BlockListener implements Listener {
                 System.currentTimeMillis()
         );
         
-        // Add score
+        // Add score via legacy ScoreManager (for compatibility)
         scoreManager.addScore(player, interaction);
+        
+        // Process via ClusterManager for multi-location tracking
+        if (clusterManager != null) {
+            clusterManager.processInteraction(player, interaction);
+        }
         
         // Track for expansion detection
         if (plugin.getExpansionManager() != null) {
@@ -113,8 +123,13 @@ public class BlockListener implements Listener {
                 System.currentTimeMillis()
         );
         
-        // Add score
+        // Add score via legacy ScoreManager (for compatibility)
         scoreManager.addScore(player, interaction);
+        
+        // Process via ClusterManager for multi-location tracking and smart mining detection
+        if (clusterManager != null) {
+            clusterManager.processInteraction(player, interaction);
+        }
         
         // Log if enabled
         if (plugin.getConfigManager().isLogInteractions()) {

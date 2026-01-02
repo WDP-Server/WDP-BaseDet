@@ -250,6 +250,67 @@ public class DetectionManager {
     }
     
     /**
+     * Check detection for a specific location cluster (used by ClusterManager)
+     * This allows multi-location tracking with separate scores per location.
+     */
+    public void checkDetectionForCluster(Player player, LocationCluster cluster) {
+        UUID uuid = player.getUniqueId();
+        
+        // Check if already in prompt
+        if (activePrompts.containsKey(uuid)) {
+            return;
+        }
+        
+        // Check cooldown
+        Long cooldownEnd = detectionCooldowns.get(uuid);
+        if (cooldownEnd != null && System.currentTimeMillis() < cooldownEnd) {
+            return;
+        }
+        
+        // Don't trigger for mining clusters
+        if (cluster.getType() == LocationCluster.ClusterType.MINING) {
+            plugin.debug("Skipping detection for mining cluster: " + cluster.getLocationString());
+            return;
+        }
+        
+        // Check if already has max bases
+        List<Base> existingBases = plugin.getDatabaseManager().getPlayerBases(uuid);
+        if (existingBases.size() >= config.getMaxBasesPerPlayer() && !config.isAutoAbandonOld()) {
+            return;
+        }
+        
+        // Create bounds from cluster center
+        // Use a default radius for the initial bounds
+        int radius = config.getMinBaseWidth() / 2;
+        int height = config.getMinBaseHeight();
+        
+        BoundingBox bounds = new BoundingBox(
+                cluster.getCenterX() - radius,
+                cluster.getCenterY() - height / 2,
+                cluster.getCenterZ() - radius,
+                cluster.getCenterX() + radius,
+                cluster.getCenterY() + height / 2,
+                cluster.getCenterZ() + radius
+        );
+        
+        // Apply offsets
+        bounds.expandBy(config.getHorizontalOffset(), config.getVerticalOffset());
+        
+        // Check minimum distance from existing bases
+        if (!checkMinimumDistance(player, bounds, existingBases)) {
+            return;
+        }
+        
+        // Debug notification if enabled
+        if (plugin.getClusterManager().isDebugEnabled(uuid)) {
+            player.sendMessage("§8[BaseDet] §aDetection triggered! Cluster type: " + cluster.getType());
+        }
+        
+        // Start detection prompt
+        startDetectionPrompt(player, bounds);
+    }
+    
+    /**
      * Manually trigger detection for a player
      */
     public void triggerManualDetection(Player player) {
