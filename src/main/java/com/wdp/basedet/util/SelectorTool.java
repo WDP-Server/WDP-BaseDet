@@ -151,7 +151,7 @@ public class SelectorTool implements Listener {
         }
         
         SelectionState state = selectionStates.computeIfAbsent(player.getUniqueId(),
-                k -> new SelectionState(currentBase, player.getWorld().getName()));
+                k -> new SelectionState());
         
         if (sneaking) {
             handleSneakAction(player, action, state, currentBase);
@@ -671,14 +671,11 @@ public class SelectorTool implements Listener {
     // ==================== INNER CLASS ====================
     
     private static class SelectionState {
-        private final Base originalBase;
-        private final String worldName;
         Integer x1, y1, z1;
         Integer x2, y2, z2;
         
-        SelectionState(Base originalBase, String worldName) {
-            this.originalBase = originalBase;
-            this.worldName = worldName;
+        SelectionState() {
+            // Default constructor
         }
         
         void setCorner1(int x, int y, int z) {

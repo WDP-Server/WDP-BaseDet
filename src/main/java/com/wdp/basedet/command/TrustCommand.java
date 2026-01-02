@@ -1,12 +1,10 @@
 package com.wdp.basedet.command;
 
 import com.wdp.basedet.WDPBaseDetPlugin;
-import com.wdp.basedet.config.ConfigManager;
 import com.wdp.basedet.config.MessageManager;
 import com.wdp.basedet.model.Base;
 import com.wdp.basedet.model.TrustEntry;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -24,12 +22,10 @@ import java.util.stream.Collectors;
 public class TrustCommand implements CommandExecutor, TabCompleter {
     
     private final WDPBaseDetPlugin plugin;
-    private final ConfigManager config;
     private final MessageManager messages;
     
     public TrustCommand(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
-        this.config = plugin.getConfigManager();
         this.messages = plugin.getMessages();
     }
     

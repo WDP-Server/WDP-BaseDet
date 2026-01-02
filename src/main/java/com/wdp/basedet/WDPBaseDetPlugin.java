@@ -267,6 +267,10 @@ public class WDPBaseDetPlugin extends JavaPlugin {
         return messageManager;
     }
     
+    public MessageManager getMessageManager() {
+        return messageManager;
+    }
+    
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
     }
