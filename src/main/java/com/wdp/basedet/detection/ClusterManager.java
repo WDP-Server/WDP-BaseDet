@@ -294,6 +294,13 @@ public class ClusterManager {
         playerClusters.remove(playerId);
     }
     
+    /**
+     * Get all player clusters (for admin debugging)
+     */
+    public Map<UUID, List<LocationCluster>> getAllPlayerClusters() {
+        return new HashMap<>(playerClusters);
+    }
+    
     // ==================== Debug Mode ====================
     
     /**

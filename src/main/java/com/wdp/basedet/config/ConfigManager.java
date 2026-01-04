@@ -7,6 +7,7 @@ import org.bukkit.Particle;
 
 import org.bukkit.configuration.file.FileConfiguration;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,6 +18,7 @@ import java.util.Set;
 public class ConfigManager {
     
     private final WDPBaseDetPlugin plugin;
+    private final ConfigMigration migration;
     private FileConfiguration config;
     
     // Cached values for performance
@@ -73,9 +75,16 @@ public class ConfigManager {
     
     public ConfigManager(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
+        this.migration = new ConfigMigration(plugin);
     }
     
     public void loadConfig() {
+        // Migrate config if needed
+        File configFile = new File(plugin.getDataFolder(), "config.yml");
+        migration.migrateConfig(configFile, "config.yml");
+        
+        // Reload after migration
+        plugin.reloadConfig();
         config = plugin.getConfig();
         
         // Database
@@ -95,6 +104,24 @@ public class ConfigManager {
         proximityRadius = config.getInt("detection.proximity.radius", 10);
         proximityBonusMultiplier = config.getDouble("detection.proximity.bonus-multiplier", 1.5);
         proximityMaxBonus = config.getDouble("detection.proximity.max-bonus", 2.0);
+        
+        // Cluster settings (new in v2)
+        int maxClusters = config.getInt("detection.clusters.max-per-player", 5);
+        int newClusterDistance = config.getInt("detection.clusters.new-cluster-distance", 200);
+        double clusterActivationThreshold = config.getDouble("detection.clusters.activation-threshold", 20.0);
+        int clusterExpiryHours = config.getInt("detection.clusters.expiry-hours", 4);
+        boolean protectHighest = config.getBoolean("detection.clusters.protect-highest", true);
+        
+        // Mining detection settings (new in v2)
+        boolean miningDetectionEnabled = config.getBoolean("detection.mining.enabled", true);
+        double miningPenalty = config.getDouble("detection.mining.mining-penalty", 0.1);
+        double hybridPenalty = config.getDouble("detection.mining.hybrid-penalty", 0.5);
+        int miningClassificationThreshold = config.getInt("detection.mining.thresholds.mining-classification", 60);
+        int hybridClassificationThreshold = config.getInt("detection.mining.thresholds.hybrid-classification", 30);
+        int patternMinPositions = config.getInt("detection.mining.pattern-detection.min-positions", 5);
+        double patternHighVariance = config.getDouble("detection.mining.pattern-detection.high-variance", 20.0);
+        double patternLowVariance = config.getDouble("detection.mining.pattern-detection.low-variance", 5.0);
+        double patternVerticalVariance = config.getDouble("detection.mining.pattern-detection.vertical-variance", 10.0);
         
         // Limits
         maxBaseWidth = config.getInt("limits.max.width", 200);
@@ -482,4 +509,62 @@ public class ConfigManager {
     public boolean isLogScoreChanges() { return logScoreChanges; }
     public boolean isLogProtectionChecks() { return logProtectionChecks; }
     public String getMessagePrefix() { return translateColors(messagePrefix); }
+    
+    // Cluster getters (new in v2)
+    public int getMaxClustersPerPlayer() { 
+        return config.getInt("detection.clusters.max-per-player", 5); 
+    }
+    
+    public int getNewClusterDistance() { 
+        return config.getInt("detection.clusters.new-cluster-distance", 200); 
+    }
+    
+    public double getClusterActivationThreshold() { 
+        return config.getDouble("detection.clusters.activation-threshold", 20.0); 
+    }
+    
+    public int getClusterExpiryHours() { 
+        return config.getInt("detection.clusters.expiry-hours", 4); 
+    }
+    
+    public boolean isProtectHighestCluster() { 
+        return config.getBoolean("detection.clusters.protect-highest", true); 
+    }
+    
+    // Mining detection getters (new in v2)
+    public boolean isMiningDetectionEnabled() { 
+        return config.getBoolean("detection.mining.enabled", true); 
+    }
+    
+    public double getMiningPenalty() { 
+        return config.getDouble("detection.mining.mining-penalty", 0.1); 
+    }
+    
+    public double getHybridPenalty() { 
+        return config.getDouble("detection.mining.hybrid-penalty", 0.5); 
+    }
+    
+    public int getMiningClassificationThreshold() { 
+        return config.getInt("detection.mining.thresholds.mining-classification", 60); 
+    }
+    
+    public int getHybridClassificationThreshold() { 
+        return config.getInt("detection.mining.thresholds.hybrid-classification", 30); 
+    }
+    
+    public int getPatternMinPositions() { 
+        return config.getInt("detection.mining.pattern-detection.min-positions", 5); 
+    }
+    
+    public double getPatternHighVariance() { 
+        return config.getDouble("detection.mining.pattern-detection.high-variance", 20.0); 
+    }
+    
+    public double getPatternLowVariance() { 
+        return config.getDouble("detection.mining.pattern-detection.low-variance", 5.0); 
+    }
+    
+    public double getPatternVerticalVariance() { 
+        return config.getDouble("detection.mining.pattern-detection.vertical-variance", 10.0); 
+    }
 }

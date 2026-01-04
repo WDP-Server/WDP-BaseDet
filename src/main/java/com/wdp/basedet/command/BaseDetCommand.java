@@ -307,13 +307,41 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    private void handleDebug(CommandSender sender) {
+    private void handleDebug(CommandSender sender, String[] args) {
+        // /base debug [toggle|clusters|detail|clear]
+        String subCmd = args.length > 1 ? args[1].toLowerCase() : "toggle";
+        
         if (!(sender instanceof Player player)) {
             // Console gets system info
             if (!sender.hasPermission("basedet.admin.debug")) {
                 messages.send(sender, "commands.no-permission");
                 return;
             }
+            
+            if (subCmd.equals("clusters")) {
+                // Show all players' clusters
+                sender.sendMessage("§6=== All Active Clusters ===");
+                var allClusters = plugin.getClusterManager().getAllPlayerClusters();
+                if (allClusters.isEmpty()) {
+                    sender.sendMessage("§7No active clusters.");
+                } else {
+                    for (var entry : allClusters.entrySet()) {
+                        Player p = Bukkit.getPlayer(entry.getKey());
+                        String name = p != null ? p.getName() : entry.getKey().toString();
+                        sender.sendMessage("§e" + name + "§7: " + entry.getValue().size() + " clusters");
+                        for (var cluster : entry.getValue()) {
+                            sender.sendMessage(String.format("  §7[%s] %s - Score: %.1f",
+                                    cluster.getType().name(),
+                                    cluster.getLocationString(),
+                                    cluster.getScore()
+                            ));
+                        }
+                    }
+                }
+                return;
+            }
+            
+            // Default console info
             messages.send(sender, "commands.debug-info");
             messages.sendRaw(sender, "commands.debug-database", "type", config.getDatabaseType());
             messages.sendRaw(sender, "commands.debug-economy", "status", 
@@ -325,50 +353,235 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
             return;
         }
         
-        // Player toggles live debug mode
+        // Player commands
         if (!player.hasPermission("basedet.user.debug") && !player.hasPermission("basedet.admin.debug")) {
             messages.send(player, "commands.no-permission");
             return;
         }
         
-        // Toggle debug mode for this player
+        switch (subCmd) {
+            case "toggle" -> handleDebugToggle(player);
+            case "clusters", "list" -> handleDebugClusters(player);
+            case "detail", "details" -> handleDebugDetail(player, args);
+            case "clear" -> handleDebugClear(player);
+            default -> {
+                player.sendMessage("§6=== Debug Commands ===");
+                player.sendMessage("§e/base debug toggle §7- Toggle live debug messages");
+                player.sendMessage("§e/base debug clusters §7- View all your clusters");
+                player.sendMessage("§e/base debug detail <#> §7- Detailed cluster info");
+                player.sendMessage("§e/base debug clear §7- Clear all your clusters");
+            }
+        }
+    }
+    
+    private void handleDebugToggle(Player player) {
         boolean enabled = plugin.getClusterManager().toggleDebug(player.getUniqueId());
         
         if (enabled) {
-            player.sendMessage("§8[BaseDet] §aDebug mode enabled!");
-            player.sendMessage("§7You will see live messages about:");
-            player.sendMessage("§7 • Block placements and their effect on score");
-            player.sendMessage("§7 • Mining detection status");
-            player.sendMessage("§7 • Cluster creation and removal");
-            player.sendMessage("§7 • Score changes with cluster type");
-            player.sendMessage("§7Use §e/base debug §7again to disable.");
+            player.sendMessage("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            player.sendMessage("§8[BaseDet] §a✓ Debug Mode ENABLED");
+            player.sendMessage("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            player.sendMessage("§7Live messages will show:");
+            player.sendMessage("  §a● §7Block interactions & score changes");
+            player.sendMessage("  §a● §7Cluster type classification");
+            player.sendMessage("  §a● §7Mining detection analysis");
+            player.sendMessage("  §a● §7Cluster creation & removal");
+            player.sendMessage("  §a● §7Score penalties & bonuses");
+            player.sendMessage("");
+            player.sendMessage("§7Commands:");
+            player.sendMessage("  §e/base debug clusters §7- View all clusters");
+            player.sendMessage("  §e/base debug detail <#> §7- Detailed info");
+            player.sendMessage("  §e/base debug toggle §7- Disable");
+            player.sendMessage("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
             // Show current cluster status
-            var clusters = plugin.getClusterManager().getClusters(player.getUniqueId());
-            if (!clusters.isEmpty()) {
-                player.sendMessage("§7Current clusters (" + clusters.size() + "/5):");
-                for (int i = 0; i < clusters.size(); i++) {
-                    var cluster = clusters.get(i);
-                    String typeColor = switch (cluster.getType()) {
-                        case BASE -> "§a";
-                        case MINING -> "§c";
-                        case HYBRID -> "§e";
-                        case UNKNOWN -> "§7";
-                    };
-                    player.sendMessage(String.format("§7 %d. %s[%s] §7at %s - Score: §f%.1f",
-                            i + 1,
-                            typeColor,
-                            cluster.getType().name(),
-                            cluster.getLocationString(),
-                            cluster.getScore()
-                    ));
-                }
-            } else {
-                player.sendMessage("§7No active clusters yet. Start building!");
-            }
+            handleDebugClusters(player);
         } else {
             player.sendMessage("§8[BaseDet] §7Debug mode disabled.");
         }
+    }
+    
+    private void handleDebugClusters(Player player) {
+        var clusters = plugin.getClusterManager().getClusters(player.getUniqueId());
+        
+        player.sendMessage("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        player.sendMessage("§6⬡ Your Active Clusters §7(" + clusters.size() + "/5)");
+        player.sendMessage("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        
+        if (clusters.isEmpty()) {
+            player.sendMessage("§7No active clusters yet.");
+            player.sendMessage("§7Start building to create a cluster!");
+        } else {
+            for (int i = 0; i < clusters.size(); i++) {
+                var cluster = clusters.get(i);
+                String typeIcon = switch (cluster.getType()) {
+                    case BASE -> "§a⌂";
+                    case MINING -> "§c⛏";
+                    case HYBRID -> "§e⚒";
+                    case UNKNOWN -> "§7?";
+                };
+                String typeColor = switch (cluster.getType()) {
+                    case BASE -> "§a";
+                    case MINING -> "§c";
+                    case HYBRID -> "§e";
+                    case UNKNOWN -> "§7";
+                };
+                
+                player.sendMessage("");
+                player.sendMessage(String.format("§f#%d %s %s%s", 
+                        i + 1, typeIcon, typeColor, cluster.getType().name()));
+                player.sendMessage(String.format("  §7Location: §f%s", cluster.getLocationString()));
+                player.sendMessage(String.format("  §7Score: §f%.1f §7/ §f%.0f §7(threshold)", 
+                        cluster.getScore(), config.getDetectionThreshold()));
+                player.sendMessage(String.format("  §7Blocks: §f%d §7broken, §f%d §7placed",
+                        cluster.getBlocksBroken(), cluster.getBlocksPlaced()));
+                
+                if (cluster.getType() != com.wdp.basedet.detection.LocationCluster.ClusterType.UNKNOWN) {
+                    double ratio = cluster.getBlocksPlaced() > 0 
+                            ? (double) cluster.getBlocksBroken() / cluster.getBlocksPlaced()
+                            : cluster.getBlocksBroken();
+                    player.sendMessage(String.format("  §7Break/Place Ratio: §f%.2f", ratio));
+                }
+                
+                if (cluster.getOresBroken() > 0) {
+                    player.sendMessage(String.format("  §7Ores: §f%d §c⛏", cluster.getOresBroken()));
+                }
+                
+                // Age
+                long ageMs = System.currentTimeMillis() - cluster.getCreatedAt();
+                long ageMinutes = ageMs / 60000;
+                if (ageMinutes < 60) {
+                    player.sendMessage(String.format("  §7Age: §f%d §7minutes", ageMinutes));
+                } else {
+                    player.sendMessage(String.format("  §7Age: §f%.1f §7hours", ageMinutes / 60.0));
+                }
+            }
+            player.sendMessage("");
+            player.sendMessage("§7Use §e/base debug detail <#> §7for more info");
+        }
+        player.sendMessage("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    }
+    
+    private void handleDebugDetail(Player player, String[] args) {
+        if (args.length < 3) {
+            player.sendMessage("§cUsage: /base debug detail <cluster#>");
+            return;
+        }
+        
+        int index;
+        try {
+            index = Integer.parseInt(args[2]) - 1;
+        } catch (NumberFormatException e) {
+            player.sendMessage("§cInvalid cluster number!");
+            return;
+        }
+        
+        var clusters = plugin.getClusterManager().getClusters(player.getUniqueId());
+        if (index < 0 || index >= clusters.size()) {
+            player.sendMessage("§cCluster #" + (index + 1) + " does not exist!");
+            return;
+        }
+        
+        var cluster = clusters.get(index);
+        
+        player.sendMessage("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        player.sendMessage(String.format("§6⬡ Cluster #%d Details", index + 1));
+        player.sendMessage("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        
+        // Type
+        String typeIcon = switch (cluster.getType()) {
+            case BASE -> "§a⌂";
+            case MINING -> "§c⛏";
+            case HYBRID -> "§e⚒";
+            case UNKNOWN -> "§7?";
+        };
+        player.sendMessage(String.format("§7Type: %s §f%s", typeIcon, cluster.getType().name()));
+        
+        // Location
+        player.sendMessage(String.format("§7Center: §f%d, %d, %d §7in §f%s",
+                cluster.getCenterX(), cluster.getCenterY(), cluster.getCenterZ(), cluster.getWorld()));
+        
+        // Score
+        player.sendMessage(String.format("§7Score: §f%.2f §7/ §f%.0f", 
+                cluster.getScore(), config.getDetectionThreshold()));
+        double progress = (cluster.getScore() / config.getDetectionThreshold()) * 100;
+        player.sendMessage(String.format("§7Progress: §f%.1f%%", progress));
+        
+        // Activity stats
+        player.sendMessage("");
+        player.sendMessage("§e⚡ Activity Stats:");
+        player.sendMessage(String.format("  §7Blocks Broken: §f%d", cluster.getBlocksBroken()));
+        player.sendMessage(String.format("  §7Blocks Placed: §f%d", cluster.getBlocksPlaced()));
+        player.sendMessage(String.format("  §7Total Blocks: §f%d", 
+                cluster.getBlocksBroken() + cluster.getBlocksPlaced()));
+        
+        if (cluster.getBlocksPlaced() > 0) {
+            double ratio = (double) cluster.getBlocksBroken() / cluster.getBlocksPlaced();
+            String ratioColor = ratio > 5 ? "§c" : ratio > 2 ? "§e" : "§a";
+            player.sendMessage(String.format("  §7Break/Place Ratio: %s%.2f", ratioColor, ratio));
+        }
+        
+        // Mining indicators
+        if (cluster.getBlocksBroken() > 0) {
+            player.sendMessage("");
+            player.sendMessage("§c⛏ Mining Indicators:");
+            player.sendMessage(String.format("  §7Ores Broken: §f%d", cluster.getOresBroken()));
+            
+            double orePercent = (double) cluster.getOresBroken() / cluster.getBlocksBroken() * 100;
+            String oreColor = orePercent > 10 ? "§c" : orePercent > 5 ? "§e" : "§7";
+            player.sendMessage(String.format("  §7Ore Percentage: %s%.1f%%", oreColor, orePercent));
+        }
+        
+        // Base indicators
+        player.sendMessage("");
+        player.sendMessage("§a⌂ Base Indicators:");
+        player.sendMessage("  §7Bed: " + (cluster.hasBed() ? "§a✓" : "§7✗"));
+        player.sendMessage("  §7Door: " + (cluster.hasDoor() ? "§a✓" : "§7✗"));
+        player.sendMessage("  §7Chest: " + (cluster.hasChest() ? "§a✓" : "§7✗"));
+        
+        // Time info
+        player.sendMessage("");
+        player.sendMessage("§b⏱ Time Info:");
+        long ageMs = System.currentTimeMillis() - cluster.getCreatedAt();
+        long ageMinutes = ageMs / 60000;
+        long ageHours = ageMinutes / 60;
+        if (ageHours > 0) {
+            player.sendMessage(String.format("  §7Created: §f%d §7hours §f%d §7minutes ago", 
+                    ageHours, ageMinutes % 60));
+        } else {
+            player.sendMessage(String.format("  §7Created: §f%d §7minutes ago", ageMinutes));
+        }
+        
+        long lastMs = System.currentTimeMillis() - cluster.getLastActivity();
+        long lastMinutes = lastMs / 60000;
+        if (lastMinutes > 0) {
+            player.sendMessage(String.format("  §7Last Activity: §f%d §7minutes ago", lastMinutes));
+        } else {
+            player.sendMessage("  §7Last Activity: §ajust now");
+        }
+        
+        // Expiry warning
+        int expiryHours = config.getClusterExpiryHours();
+        long remainingHours = expiryHours - (lastMinutes / 60);
+        if (remainingHours < 2) {
+            player.sendMessage(String.format("  §c⚠ Expires in: §f%d §7hours §7(if inactive)", remainingHours));
+        }
+        
+        player.sendMessage("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    }
+    
+    private void handleDebugClear(Player player) {
+        if (!player.hasPermission("basedet.admin.debug")) {
+            messages.send(player, "commands.no-permission");
+            return;
+        }
+        
+        var clusters = plugin.getClusterManager().getClusters(player.getUniqueId());
+        int count = clusters.size();
+        
+        plugin.getClusterManager().clearAllClusters(player.getUniqueId());
+        
+        player.sendMessage("§8[BaseDet] §7Cleared §f" + count + " §7clusters.");
     }
     
     private void handleForce(CommandSender sender, String[] args) {
@@ -512,6 +725,14 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
         
         if (args.length == 2) {
             String sub = args[0].toLowerCase();
+            
+            // Debug subcommands
+            if (sub.equals("debug")) {
+                completions.addAll(Arrays.asList("toggle", "clusters", "detail", "clear"));
+                return filterCompletions(completions, args[1]);
+            }
+            
+            // Player name completions
             if (sub.equals("force") || sub.equals("info") || sub.equals("delete") || sub.equals("score")) {
                 return filterCompletions(
                         Bukkit.getOnlinePlayers().stream()
@@ -519,6 +740,17 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
                                 .collect(Collectors.toList()),
                         args[1]
                 );
+            }
+        }
+        
+        // Cluster number completion for /base debug detail
+        if (args.length == 3 && args[0].equalsIgnoreCase("debug") && args[1].equalsIgnoreCase("detail")) {
+            if (sender instanceof Player player) {
+                var clusters = plugin.getClusterManager().getClusters(player.getUniqueId());
+                for (int i = 1; i <= clusters.size(); i++) {
+                    completions.add(String.valueOf(i));
+                }
+                return filterCompletions(completions, args[2]);
             }
         }
         

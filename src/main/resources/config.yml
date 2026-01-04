@@ -1,6 +1,10 @@
 # WDP-BaseDet Configuration
 # Automatic base detection and protection system
 
+# Configuration version - DO NOT EDIT THIS
+# This is used for automatic config migration
+config-version: 2
+
 # ===========================================
 # DATABASE SETTINGS
 # ===========================================
@@ -32,6 +36,44 @@ detection:
   
   # Minimum time (seconds) between detections for same player
   detection-cooldown: 300
+  
+  # Multi-location cluster settings
+  clusters:
+    # Maximum clusters per player (separate bases being built)
+    max-per-player: 5
+    # Distance to start new cluster (blocks)
+    new-cluster-distance: 200
+    # Minimum score for cluster to be "active"
+    activation-threshold: 20.0
+    # Time before inactive cluster expires (hours)
+    expiry-hours: 48
+    # Never remove highest scoring cluster
+    protect-highest: true
+  
+  # Mining detection settings
+  mining:
+    # Enable smart mining detection
+    enabled: true
+    # Score penalty for mining-classified clusters (0.0 - 1.0)
+    mining-penalty: 0.1
+    # Score penalty for hybrid clusters (0.0 - 1.0)
+    hybrid-penalty: 0.5
+    # Thresholds for classification
+    thresholds:
+      # Mining score >= 60 = MINING type
+      mining-classification: 60
+      # Mining score >= 30 = HYBRID type
+      hybrid-classification: 30
+    # Linear pattern detection
+    pattern-detection:
+      # Minimum positions to detect pattern
+      min-positions: 5
+      # High variance threshold for axis
+      high-variance: 20.0
+      # Low variance threshold for axis
+      low-variance: 5.0
+      # Vertical shaft high variance
+      vertical-variance: 10.0
   
   # Score decay settings
   decay:

@@ -1,6 +1,10 @@
 # ===========================================
 # WDP-BaseDet Messages Configuration
 # ===========================================
+# Language version - for compatibility checking
+# DO NOT EDIT unless you're updating translations
+language-version: "1.0.0"
+
 # Supports hex colors: &#RRGGBB
 # Supports legacy colors: &a, &b, etc.
 # Placeholders use: {key} format

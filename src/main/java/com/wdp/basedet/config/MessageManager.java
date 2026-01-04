@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 public class MessageManager {
     
     private final WDPBaseDetPlugin plugin;
+    private final ConfigMigration migration;
     private FileConfiguration messages;
     private File messagesFile;
     private String currentLanguage = "en";
@@ -37,6 +38,7 @@ public class MessageManager {
     
     public MessageManager(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
+        this.migration = new ConfigMigration(plugin);
         loadMessages();
     }
     
@@ -83,6 +85,9 @@ public class MessageManager {
                 plugin.getLogger().warning("Failed to load default messages: " + e.getMessage());
             }
         }
+        
+        // Check language version and warn if different
+        migration.checkLanguageVersion(messagesFile, "messages.yml");
     }
     
     /**
