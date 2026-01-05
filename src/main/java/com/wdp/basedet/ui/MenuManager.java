@@ -1399,7 +1399,6 @@ public class MenuManager implements Listener {
      * Execute the actual teleport
      */
     private void executeTeleport(Player player, Base base, Location destination, int cost) {
-        var config = plugin.getConfigManager();
         
         // Charge cost
         if (cost > 0 && plugin.getEconomyIntegration() != null && plugin.getEconomyIntegration().isEnabled()) {

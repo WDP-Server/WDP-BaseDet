@@ -86,7 +86,6 @@ public class UnifiedMenuManager {
      * @param menuType The type of menu (e.g., "main", "trust", "quest")
      * @param context Context data for placeholders (page, total_pages, previous_menu, coins, tokens, etc.)
      */
-    @SuppressWarnings("unchecked")
     public void applyNavbar(Inventory inv, Player player, String menuType, Map<String, Object> context) {
         FileConfiguration config = navbarConfigs.get("default");
         if (config == null) {

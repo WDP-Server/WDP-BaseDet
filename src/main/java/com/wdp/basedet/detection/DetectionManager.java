@@ -6,7 +6,6 @@ import com.wdp.basedet.config.MessageManager;
 import com.wdp.basedet.model.Base;
 import com.wdp.basedet.model.BoundingBox;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -432,15 +431,13 @@ public class DetectionManager {
      * Find core bounds when interactions are spread too far
      */
     private BoundingBox findCoreBounds(List<PlayerInteraction> interactions) {
-        // Find the centroid
-        double sumX = 0, sumY = 0, sumZ = 0;
+        // Find the centroid (X and Z only, for horizontal radius calculation)
+        double sumX = 0, sumZ = 0;
         for (PlayerInteraction i : interactions) {
             sumX += i.getX();
-            sumY += i.getY();
             sumZ += i.getZ();
         }
         int centerX = (int) (sumX / interactions.size());
-        int centerY = (int) (sumY / interactions.size());
         int centerZ = (int) (sumZ / interactions.size());
         
         // Filter interactions within a reasonable radius of centroid

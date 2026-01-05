@@ -1,7 +1,6 @@
 package com.wdp.basedet.detection;
 
-import org.bukkit.Location;
-import org.bukkit.World;
+import com.wdp.basedet.config.ConfigManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +18,7 @@ import java.util.UUID;
  */
 public class LocationCluster {
     
+    private final ConfigManager config;
     private final UUID playerId;
     private final String world;
     private int centerX;
@@ -49,7 +49,8 @@ public class LocationCluster {
         HYBRID     // Mixed activity
     }
     
-    public LocationCluster(UUID playerId, String world, int x, int y, int z) {
+    public LocationCluster(ConfigManager config, UUID playerId, String world, int x, int y, int z) {
+        this.config = config;
         this.playerId = playerId;
         this.world = world;
         this.centerX = x;
@@ -218,6 +219,12 @@ public class LocationCluster {
      * Reclassify the cluster based on accumulated metrics
      */
     private void reclassify() {
+        if (!config.isMiningDetectionEnabled()) {
+            // If mining detection disabled, assume everything is base building
+            type = ClusterType.BASE;
+            return;
+        }
+        
         int totalBlocks = blocksBroken + blocksPlaced;
         if (totalBlocks < 10) {
             type = ClusterType.UNKNOWN;
@@ -250,10 +257,13 @@ public class LocationCluster {
         if (linearPatternCount > 5) miningScore += 25;
         else if (linearPatternCount > 2) miningScore += 10;
         
-        // Classify
-        if (miningScore >= 60) {
+        // Classify using config thresholds
+        int miningThreshold = config.getMiningClassificationThreshold();
+        int hybridThreshold = config.getHybridClassificationThreshold();
+        
+        if (miningScore >= miningThreshold) {
             type = ClusterType.MINING;
-        } else if (miningScore >= 30) {
+        } else if (miningScore >= hybridThreshold) {
             type = ClusterType.HYBRID;
         } else if (blocksPlaced >= 10 || hasBaseIndicators()) {
             type = ClusterType.BASE;

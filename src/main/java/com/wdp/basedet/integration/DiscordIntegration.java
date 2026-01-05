@@ -19,7 +19,6 @@ public class DiscordIntegration {
     private boolean enabled;
     private Object discordSRV;
     private Method getAccountLinkManagerMethod;
-    private Method sendPrivateMessageMethod;
     
     // Track pending trust requests via Discord
     private final Map<String, PendingTrust> pendingTrusts = new ConcurrentHashMap<>();

@@ -6,7 +6,6 @@ import com.wdp.basedet.model.Base;
 import com.wdp.basedet.model.TrustEntry;
 import com.wdp.basedet.protection.ProtectionManager;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;

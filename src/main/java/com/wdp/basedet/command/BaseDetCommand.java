@@ -63,7 +63,7 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
             case "expand" -> handleExpand(sender, args);
             case "menu" -> handleMenu(sender);
             case "reload" -> handleReload(sender);
-            case "debug" -> handleDebug(sender);
+            case "debug" -> handleDebug(sender, args);
             case "force" -> handleForce(sender, args);
             case "info" -> handleInfo(sender, args);
             case "list" -> handleList(sender, args);

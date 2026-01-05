@@ -1,7 +1,6 @@
 package com.wdp.basedet.config;
 
 import com.wdp.basedet.WDPBaseDetPlugin;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -11,8 +10,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Handles configuration migration between versions

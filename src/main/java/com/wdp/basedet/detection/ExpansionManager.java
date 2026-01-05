@@ -6,7 +6,6 @@ import com.wdp.basedet.config.MessageManager;
 import com.wdp.basedet.model.Base;
 import com.wdp.basedet.model.BoundingBox;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 

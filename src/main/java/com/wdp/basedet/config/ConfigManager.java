@@ -73,6 +73,24 @@ public class ConfigManager {
     private boolean logProtectionChecks;
     private String messagePrefix;
     
+    // Cluster settings (v2)
+    private int maxClusters;
+    private int newClusterDistance;
+    private double clusterActivationThreshold;
+    private int clusterExpiryHours;
+    private boolean protectHighest;
+    
+    // Mining detection settings (v2)
+    private boolean miningDetectionEnabled;
+    private double miningPenalty;
+    private double hybridPenalty;
+    private int miningClassificationThreshold;
+    private int hybridClassificationThreshold;
+    private int patternMinPositions;
+    private double patternHighVariance;
+    private double patternLowVariance;
+    private double patternVerticalVariance;
+    
     public ConfigManager(WDPBaseDetPlugin plugin) {
         this.plugin = plugin;
         this.migration = new ConfigMigration(plugin);
@@ -106,22 +124,22 @@ public class ConfigManager {
         proximityMaxBonus = config.getDouble("detection.proximity.max-bonus", 2.0);
         
         // Cluster settings (new in v2)
-        int maxClusters = config.getInt("detection.clusters.max-per-player", 5);
-        int newClusterDistance = config.getInt("detection.clusters.new-cluster-distance", 200);
-        double clusterActivationThreshold = config.getDouble("detection.clusters.activation-threshold", 20.0);
-        int clusterExpiryHours = config.getInt("detection.clusters.expiry-hours", 4);
-        boolean protectHighest = config.getBoolean("detection.clusters.protect-highest", true);
+        maxClusters = config.getInt("detection.clusters.max-per-player", 5);
+        newClusterDistance = config.getInt("detection.clusters.new-cluster-distance", 200);
+        clusterActivationThreshold = config.getDouble("detection.clusters.activation-threshold", 20.0);
+        clusterExpiryHours = config.getInt("detection.clusters.expiry-hours", 4);
+        protectHighest = config.getBoolean("detection.clusters.protect-highest", true);
         
         // Mining detection settings (new in v2)
-        boolean miningDetectionEnabled = config.getBoolean("detection.mining.enabled", true);
-        double miningPenalty = config.getDouble("detection.mining.mining-penalty", 0.1);
-        double hybridPenalty = config.getDouble("detection.mining.hybrid-penalty", 0.5);
-        int miningClassificationThreshold = config.getInt("detection.mining.thresholds.mining-classification", 60);
-        int hybridClassificationThreshold = config.getInt("detection.mining.thresholds.hybrid-classification", 30);
-        int patternMinPositions = config.getInt("detection.mining.pattern-detection.min-positions", 5);
-        double patternHighVariance = config.getDouble("detection.mining.pattern-detection.high-variance", 20.0);
-        double patternLowVariance = config.getDouble("detection.mining.pattern-detection.low-variance", 5.0);
-        double patternVerticalVariance = config.getDouble("detection.mining.pattern-detection.vertical-variance", 10.0);
+        miningDetectionEnabled = config.getBoolean("detection.mining.enabled", true);
+        miningPenalty = config.getDouble("detection.mining.mining-penalty", 0.1);
+        hybridPenalty = config.getDouble("detection.mining.hybrid-penalty", 0.5);
+        miningClassificationThreshold = config.getInt("detection.mining.thresholds.mining-classification", 60);
+        hybridClassificationThreshold = config.getInt("detection.mining.thresholds.hybrid-classification", 30);
+        patternMinPositions = config.getInt("detection.mining.pattern-detection.min-positions", 5);
+        patternHighVariance = config.getDouble("detection.mining.pattern-detection.high-variance", 20.0);
+        patternLowVariance = config.getDouble("detection.mining.pattern-detection.low-variance", 5.0);
+        patternVerticalVariance = config.getDouble("detection.mining.pattern-detection.vertical-variance", 10.0);
         
         // Limits
         maxBaseWidth = config.getInt("limits.max.width", 200);
@@ -512,59 +530,59 @@ public class ConfigManager {
     
     // Cluster getters (new in v2)
     public int getMaxClustersPerPlayer() { 
-        return config.getInt("detection.clusters.max-per-player", 5); 
+        return maxClusters; 
     }
     
     public int getNewClusterDistance() { 
-        return config.getInt("detection.clusters.new-cluster-distance", 200); 
+        return newClusterDistance; 
     }
     
     public double getClusterActivationThreshold() { 
-        return config.getDouble("detection.clusters.activation-threshold", 20.0); 
+        return clusterActivationThreshold; 
     }
     
     public int getClusterExpiryHours() { 
-        return config.getInt("detection.clusters.expiry-hours", 4); 
+        return clusterExpiryHours; 
     }
     
     public boolean isProtectHighestCluster() { 
-        return config.getBoolean("detection.clusters.protect-highest", true); 
+        return protectHighest; 
     }
     
     // Mining detection getters (new in v2)
     public boolean isMiningDetectionEnabled() { 
-        return config.getBoolean("detection.mining.enabled", true); 
+        return miningDetectionEnabled; 
     }
     
     public double getMiningPenalty() { 
-        return config.getDouble("detection.mining.mining-penalty", 0.1); 
+        return miningPenalty; 
     }
     
     public double getHybridPenalty() { 
-        return config.getDouble("detection.mining.hybrid-penalty", 0.5); 
+        return hybridPenalty; 
     }
     
     public int getMiningClassificationThreshold() { 
-        return config.getInt("detection.mining.thresholds.mining-classification", 60); 
+        return miningClassificationThreshold; 
     }
     
     public int getHybridClassificationThreshold() { 
-        return config.getInt("detection.mining.thresholds.hybrid-classification", 30); 
+        return hybridClassificationThreshold; 
     }
     
     public int getPatternMinPositions() { 
-        return config.getInt("detection.mining.pattern-detection.min-positions", 5); 
+        return patternMinPositions; 
     }
     
     public double getPatternHighVariance() { 
-        return config.getDouble("detection.mining.pattern-detection.high-variance", 20.0); 
+        return patternHighVariance; 
     }
     
     public double getPatternLowVariance() { 
-        return config.getDouble("detection.mining.pattern-detection.low-variance", 5.0); 
+        return patternLowVariance; 
     }
     
     public double getPatternVerticalVariance() { 
-        return config.getDouble("detection.mining.pattern-detection.vertical-variance", 10.0); 
+        return patternVerticalVariance; 
     }
 }

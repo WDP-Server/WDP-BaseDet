@@ -26,18 +26,6 @@ public class ClusterManager {
     private final WDPBaseDetPlugin plugin;
     private final ConfigManager config;
     
-    // Max clusters per player
-    private static final int MAX_CLUSTERS = 5;
-    
-    // Distance threshold to start a new cluster (blocks)
-    private static final int NEW_CLUSTER_DISTANCE = 200;
-    
-    // Minimum score to "activate" a new cluster
-    private static final double CLUSTER_ACTIVATION_THRESHOLD = 20.0;
-    
-    // Expiry time for inactive clusters (4 hours in ms)
-    private static final long CLUSTER_EXPIRY_MS = 4 * 60 * 60 * 1000;
-    
     // Player clusters - maps player UUID to their location clusters
     private final Map<UUID, List<LocationCluster>> playerClusters = new ConcurrentHashMap<>();
     
@@ -64,14 +52,16 @@ public class ClusterManager {
                 if (clusters == null || clusters.isEmpty()) continue;
                 
                 // Find highest scoring cluster (never remove)
-                LocationCluster highest = clusters.stream()
-                        .max(Comparator.comparingDouble(LocationCluster::getScore))
-                        .orElse(null);
+                LocationCluster highest = config.isProtectHighestCluster() ? 
+                        clusters.stream()
+                            .max(Comparator.comparingDouble(LocationCluster::getScore))
+                            .orElse(null) : null;
                 
-                // Remove expired clusters (except highest)
+                // Remove expired clusters (except highest if protection enabled)
+                long expiryMs = config.getClusterExpiryHours() * 60L * 60L * 1000L;
                 clusters.removeIf(cluster -> 
                     cluster != highest && 
-                    cluster.isExpired(now, CLUSTER_EXPIRY_MS)
+                    cluster.isExpired(now, expiryMs)
                 );
             }
         }, 20 * 60 * 5, 20 * 60 * 5); // Every 5 minutes
@@ -98,8 +88,9 @@ public class ClusterManager {
             }
         }
         
-        // If we found a cluster within NEW_CLUSTER_DISTANCE, use it
-        if (nearestCluster != null && nearestDistance < NEW_CLUSTER_DISTANCE) {
+        // If we found a cluster within configured distance, use it
+        int clusterDistance = config.getNewClusterDistance();
+        if (nearestCluster != null && nearestDistance < clusterDistance) {
             // Update center with weighted average (move slightly towards new activity)
             nearestCluster.updateCenter(x, y, z);
             return nearestCluster;
@@ -107,11 +98,13 @@ public class ClusterManager {
         
         // Need to create a new cluster
         // But first, check if we're at max clusters
-        if (clusters.size() >= MAX_CLUSTERS) {
-            // Find the cluster to remove (lowest score, except never remove highest)
-            LocationCluster highest = clusters.stream()
-                    .max(Comparator.comparingDouble(LocationCluster::getScore))
-                    .orElse(null);
+        int maxClusters = config.getMaxClustersPerPlayer();
+        if (clusters.size() >= maxClusters) {
+            // Find the cluster to remove (lowest score, except never remove highest if protection enabled)
+            LocationCluster highest = config.isProtectHighestCluster() ? 
+                    clusters.stream()
+                        .max(Comparator.comparingDouble(LocationCluster::getScore))
+                        .orElse(null) : null;
             
             LocationCluster toRemove = clusters.stream()
                     .filter(c -> c != highest)
@@ -132,7 +125,7 @@ public class ClusterManager {
         }
         
         // Create new cluster
-        LocationCluster newCluster = new LocationCluster(playerId, world, x, y, z);
+        LocationCluster newCluster = new LocationCluster(config, playerId, world, x, y, z);
         clusters.add(newCluster);
         
         // Debug notification
@@ -140,7 +133,7 @@ public class ClusterManager {
         if (player != null && isDebugEnabled(playerId)) {
             sendDebug(player, "&a[Cluster] Started new activity cluster at " + 
                     newCluster.getLocationString());
-            sendDebug(player, "&7You now have " + clusters.size() + "/" + MAX_CLUSTERS + " active clusters");
+            sendDebug(player, "&7You now have " + clusters.size() + "/" + maxClusters + " active clusters");
         }
         
         return newCluster;
@@ -164,9 +157,9 @@ public class ClusterManager {
         
         // Apply mining penalty if this looks like mining
         if (cluster.getType() == ClusterType.MINING) {
-            score *= 0.1; // 90% reduction for mining activity
+            score *= config.getMiningPenalty(); // Configurable penalty for mining activity
         } else if (cluster.getType() == ClusterType.HYBRID) {
-            score *= 0.5; // 50% reduction for mixed activity
+            score *= config.getHybridPenalty(); // Configurable penalty for mixed activity
         }
         
         // Track the interaction type
@@ -233,7 +226,7 @@ public class ClusterManager {
             cluster.getType() != ClusterType.MINING) {
             
             // Only trigger if cluster is activated (past initial threshold)
-            if (cluster.getScore() >= CLUSTER_ACTIVATION_THRESHOLD) {
+            if (cluster.getScore() >= config.getClusterActivationThreshold()) {
                 plugin.getDetectionManager().checkDetectionForCluster(player, cluster);
             }
         }
@@ -264,7 +257,7 @@ public class ClusterManager {
     public List<LocationCluster> getBaseClusters(UUID playerId) {
         return getClusters(playerId).stream()
                 .filter(c -> c.getType() == ClusterType.BASE || c.getType() == ClusterType.UNKNOWN)
-                .filter(c -> c.getScore() >= CLUSTER_ACTIVATION_THRESHOLD)
+                .filter(c -> c.getScore() >= config.getClusterActivationThreshold())
                 .collect(Collectors.toList());
     }
     
