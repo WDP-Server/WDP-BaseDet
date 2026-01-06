@@ -3,7 +3,7 @@
 
 # Configuration version - DO NOT EDIT THIS
 # This is used for automatic config migration
-config-version: 2
+config-version: 3
 
 # ===========================================
 # DATABASE SETTINGS
@@ -32,7 +32,7 @@ database:
 # ===========================================
 detection:
   # Score threshold to trigger detection prompt
-  detection-threshold: 100
+  detection-threshold: 150
   
   # Minimum time (seconds) between detections for same player
   detection-cooldown: 300
@@ -42,7 +42,7 @@ detection:
     # Maximum clusters per player (separate bases being built)
     max-per-player: 5
     # Distance to start new cluster (blocks)
-    new-cluster-distance: 200
+    new-cluster-distance: 100
     # Minimum score for cluster to be "active"
     activation-threshold: 20.0
     # Time before inactive cluster expires (hours)

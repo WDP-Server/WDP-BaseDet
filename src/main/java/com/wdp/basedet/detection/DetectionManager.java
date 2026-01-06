@@ -631,6 +631,13 @@ public class DetectionManager {
         // Delete the pending base
         plugin.getDatabaseManager().deleteBase(prompt.getBase().getId());
         
+        // IMPORTANT: Reset score to 0 when denying to prevent re-triggering
+        plugin.getScoreManager().clearScore(uuid);
+        plugin.getScoreManager().resetScoreLimits(uuid);
+        
+        // Also clear the cluster that triggered this detection
+        plugin.getClusterManager().clearAllClusters(uuid);
+        
         // Give small reward for denying
         double reward = config.getDenyReward();
         if (reward > 0 && plugin.getEconomyIntegration() != null) {

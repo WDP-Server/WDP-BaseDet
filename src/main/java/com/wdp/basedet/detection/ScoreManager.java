@@ -113,6 +113,8 @@ public class ScoreManager {
         double bonus = calculateProximityBonus(uuid, interaction);
         double totalScore = baseScore * bonus;
         
+        // Note: Global score tracking kept for backwards compatibility and stats
+        // Actual detection is handled by ClusterManager per-cluster scoring
         double currentScore = getScore(uuid);
         double newScore = currentScore + totalScore;
         setScore(uuid, newScore);
@@ -126,10 +128,8 @@ public class ScoreManager {
                     player.getName(), totalScore, baseScore, bonus, newScore));
         }
         
-        // Check for detection threshold
-        if (newScore >= config.getDetectionThreshold()) {
-            plugin.getDetectionManager().checkDetection(player);
-        }
+        // Detection check removed - now handled by ClusterManager.processInteraction()
+        // which checks per-cluster scores instead of global sum
     }
     
     /**

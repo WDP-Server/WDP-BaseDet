@@ -72,7 +72,7 @@ public class MenuManager implements Listener {
      * Open the main base menu
      */
     public void openMainMenu(Player player, Base base) {
-        String title = hex("#FFD700") + "✦ " + hex("#FFFFFF") + "Base Management";
+        String title = hex("#808080") + "✦ Base Management";
         Inventory inv = Bukkit.createInventory(null, 54, MENU_ID + title);
         
         // Fill background
@@ -211,7 +211,7 @@ public class MenuManager implements Listener {
      * Uses biome/dimension as icon, center-aligned
      */
     public void openBaseSelector(Player player, List<Base> bases) {
-        String title = hex("#FFD700") + "✦ " + hex("#FFFFFF") + "Select a Base";
+        String title = hex("#808080") + "✦ Select a Base";
         Inventory inv = Bukkit.createInventory(null, 54, MENU_ID + title);
         
         // Fill background
@@ -352,7 +352,7 @@ public class MenuManager implements Listener {
      * Open the trust management menu
      */
     public void openTrustMenu(Player player, Base base) {
-        String title = hex("#FFD700") + "✦ " + hex("#FFFFFF") + "Trust Manager";
+        String title = hex("#808080") + "✦ Trust Manager";
         Inventory inv = Bukkit.createInventory(null, 54, MENU_ID + title);
         
         // Fill background
@@ -414,7 +414,7 @@ public class MenuManager implements Listener {
      */
     public void openPermissionsMenu(Player player, Base base, TrustEntry trustEntry, int page) {
         String trustedName = plugin.getTrustManager().getPlayerName(trustEntry.getTrustedUUID());
-        String title = hex("#FFD700") + "✦ " + hex("#FFFFFF") + trustedName + " §7(" + page + "/2)";
+        String title = hex("#808080") + "✦ " + trustedName + " (" + page + "/2)";
         Inventory inv = Bukkit.createInventory(null, 54, MENU_ID + title);
         
         // Fill background
@@ -531,7 +531,7 @@ public class MenuManager implements Listener {
      * Open base statistics menu
      */
     public void openStatsMenu(Player player, Base base) {
-        String title = hex("#FFD700") + "✦ " + hex("#FFFFFF") + "Base Statistics";
+        String title = hex("#808080") + "✦ Base Statistics";
         Inventory inv = Bukkit.createInventory(null, 54, MENU_ID + title);
         
         // Fill background
@@ -652,7 +652,7 @@ public class MenuManager implements Listener {
      * Open base settings menu
      */
     public void openSettingsMenu(Player player, Base base) {
-        String title = hex("#FFD700") + "✦ " + hex("#FFFFFF") + "Protection Info";
+        String title = hex("#808080") + "✦ Protection Info";
         Inventory inv = Bukkit.createInventory(null, 54, MENU_ID + title);
         
         // Fill background

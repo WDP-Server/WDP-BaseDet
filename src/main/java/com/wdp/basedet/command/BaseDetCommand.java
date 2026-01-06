@@ -179,11 +179,22 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
         
         UUID targetUUID;
         String targetName;
+        boolean showAll = false;
         
-        if (args.length > 1 && player.hasPermission("basedet.admin.view")) {
-            Player target = Bukkit.getPlayer(args[1]);
+        // Parse arguments: /base score [all] [player]
+        int playerArgIndex = -1;
+        for (int i = 1; i < args.length; i++) {
+            if ("all".equalsIgnoreCase(args[i])) {
+                showAll = true;
+            } else if (playerArgIndex == -1) {
+                playerArgIndex = i;
+            }
+        }
+        
+        if (playerArgIndex >= 0 && player.hasPermission("basedet.admin.view")) {
+            Player target = Bukkit.getPlayer(args[playerArgIndex]);
             if (target == null) {
-                messages.send(player, "commands.player-not-found", "player", args[1]);
+                messages.send(player, "commands.player-not-found", "player", args[playerArgIndex]);
                 return;
             }
             targetUUID = target.getUniqueId();
@@ -193,17 +204,69 @@ public class BaseDetCommand implements CommandExecutor, TabCompleter {
             targetName = player.getName();
         }
         
-        double score = plugin.getScoreManager().getScore(targetUUID);
         double threshold = config.getDetectionThreshold();
-        double percentage = (score / threshold) * 100;
         
         messages.send(player, "commands.detection-score-for", "player", targetName);
-        messages.sendRaw(player, "commands.score-display", 
-                "score", String.format("%.2f", score),
-                "threshold", String.valueOf((int) threshold));
-        messages.sendRaw(player, "commands.progress-display", 
-                "bar", getProgressBar(percentage),
-                "percentage", String.format("%.1f", Math.min(percentage, 100)));
+        
+        var clusters = plugin.getClusterManager().getClusters(targetUUID);
+        
+        if (clusters.isEmpty()) {
+            player.sendMessage(ChatColor.GRAY + "  No activity clusters detected yet.");
+            player.sendMessage(ChatColor.GRAY + "  Start placing blocks to build detection score.");
+            return;
+        }
+        
+        if (showAll) {
+            // Show ALL clusters
+            player.sendMessage(ChatColor.YELLOW + "  All Clusters: " + ChatColor.WHITE + clusters.size());
+            player.sendMessage("");
+            
+            int i = 1;
+            for (var cluster : clusters) {
+                double clusterScore = cluster.getScore();
+                double percentage = (clusterScore / threshold) * 100;
+                String typeColor = switch (cluster.getType()) {
+                    case BASE -> ChatColor.GREEN.toString();
+                    case MINING -> ChatColor.RED.toString();
+                    case HYBRID -> ChatColor.YELLOW.toString();
+                    case UNKNOWN -> ChatColor.GRAY.toString();
+                };
+                
+                player.sendMessage(ChatColor.GRAY + "  Cluster " + i + " [" + typeColor + cluster.getType().name() + ChatColor.GRAY + "]:");
+                player.sendMessage(ChatColor.GRAY + "    Location: " + ChatColor.WHITE + cluster.getLocationString());
+                player.sendMessage(ChatColor.GRAY + "    Score: " + ChatColor.WHITE + String.format("%.1f", clusterScore) + 
+                        ChatColor.GRAY + "/" + ChatColor.WHITE + (int) threshold);
+                player.sendMessage(ChatColor.GRAY + "    " + getProgressBar(percentage) + ChatColor.GRAY + 
+                        " " + String.format("%.1f", Math.min(percentage, 100)) + "%");
+                i++;
+            }
+        } else {
+            // Show ONLY the closest cluster (the one being detected)
+            var closest = plugin.getClusterManager().getHighestScoringCluster(targetUUID);
+            if (closest != null) {
+                double clusterScore = closest.getScore();
+                double percentage = (clusterScore / threshold) * 100;
+                String typeColor = switch (closest.getType()) {
+                    case BASE -> ChatColor.GREEN.toString();
+                    case MINING -> ChatColor.RED.toString();
+                    case HYBRID -> ChatColor.YELLOW.toString();
+                    case UNKNOWN -> ChatColor.GRAY.toString();
+                };
+                
+                player.sendMessage(ChatColor.GRAY + "  Active Detection [" + typeColor + closest.getType().name() + ChatColor.GRAY + "]:");
+                player.sendMessage(ChatColor.GRAY + "    Location: " + ChatColor.WHITE + closest.getLocationString());
+                player.sendMessage(ChatColor.GRAY + "    Score: " + ChatColor.WHITE + String.format("%.1f", clusterScore) + 
+                        ChatColor.GRAY + "/" + ChatColor.WHITE + (int) threshold);
+                player.sendMessage(ChatColor.GRAY + "    " + getProgressBar(percentage) + ChatColor.GRAY + 
+                        " " + String.format("%.1f", Math.min(percentage, 100)) + "%");
+                
+                if (clusters.size() > 1) {
+                    player.sendMessage("");
+                    player.sendMessage(ChatColor.DARK_GRAY + "  Tip: Use " + ChatColor.GRAY + "/base score all" + 
+                            ChatColor.DARK_GRAY + " to see all clusters");
+                }
+            }
+        }
     }
     
     private String getProgressBar(double percentage) {
