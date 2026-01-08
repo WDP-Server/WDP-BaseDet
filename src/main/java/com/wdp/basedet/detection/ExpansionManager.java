@@ -182,6 +182,9 @@ public class ExpansionManager {
         Base base = prompt.getBase();
         BoundingBox newBounds = prompt.getNewBounds();
         
+        // IMPORTANT: Save old bounds BEFORE updating
+        BoundingBox oldBounds = base.getBounds().copy();
+        
         // Update base bounds in database
         plugin.getDatabaseManager().updateBaseBounds(base.getId(), newBounds);
         base.setBounds(newBounds);
@@ -197,7 +200,6 @@ public class ExpansionManager {
         }
         
         // Show detailed size info
-        BoundingBox oldBounds = prompt.getBase().getBounds();
         int oldVolume = oldBounds.getWidth() * oldBounds.getLength() * oldBounds.getHeight();
         int newVolume = newBounds.getWidth() * newBounds.getLength() * newBounds.getHeight();
         int addedVolume = newVolume - oldVolume;

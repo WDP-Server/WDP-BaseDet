@@ -201,6 +201,7 @@ public class WDPBaseDetPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new BlockListener(this), this);
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ProtectionListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new com.wdp.basedet.listener.CombatProtectionListener(this), this);
         Bukkit.getPluginManager().registerEvents(menuManager, this);
         Bukkit.getPluginManager().registerEvents(selectorTool, this);
         

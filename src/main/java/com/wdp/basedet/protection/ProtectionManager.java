@@ -70,19 +70,6 @@ public class ProtectionManager {
         Player owner = Bukkit.getPlayer(ownerUUID);
         boolean ownerOnline = owner != null && owner.isOnline();
         
-        // If owner is online, griefing is allowed (per requirements)
-        if (ownerOnline && !config.isProtectedAction("block-break")) {
-            return true;
-        }
-        
-        // Check if action is protected when offline
-        if (!ownerOnline) {
-            String configAction = convertActionToConfig(action);
-            if (!config.isProtectedAction(configAction)) {
-                return true; // Action not protected
-            }
-        }
-        
         // Combat flag check - use CombatManager (supports CMI and custom)
         if (plugin.getCombatManager() != null && config.isCombatEnabled()) {
             if (isInCombatNear(player, base)) {
@@ -92,19 +79,36 @@ public class ProtectionManager {
             }
         }
         
-        // Check trust
+        // Check if player is trusted
         TrustEntry trust = plugin.getDatabaseManager().getTrust(base.getId(), playerUUID);
         if (trust != null) {
+            // Trusted player - use trust permissions
             if (trust.canDoAction(action, ownerOnline)) {
+                return true;
+            }
+        } else {
+            // Untrusted player - use untrusted permissions from config
+            String configAction = convertActionToUntrustedConfig(action);
+            boolean allowed;
+            
+            if (ownerOnline) {
+                // Check untrusted-online permissions
+                allowed = config.getUntrustedOnline(configAction);
+            } else {
+                // Check untrusted-offline permissions
+                allowed = config.getUntrustedOffline(configAction);
+            }
+            
+            if (allowed) {
                 return true;
             }
         }
         
         // Log if debug enabled
         if (config.isLogProtectionChecks()) {
-            plugin.debug(String.format("Protection blocked: %s tried to %s at %s (owner %s, online: %s)",
+            plugin.debug(String.format("Protection blocked: %s tried to %s at %s (owner %s, online: %s, trusted: %s)",
                     player.getName(), action, formatLocation(location), 
-                    ownerUUID, ownerOnline));
+                    ownerUUID, ownerOnline, trust != null));
         }
         
         return false;
@@ -143,6 +147,23 @@ public class ProtectionManager {
             case "place" -> "block-place";
             case "chest" -> "chest-access";
             case "interact" -> "door-interact";
+            default -> action;
+        };
+    }
+    
+    /**
+     * Convert action name to untrusted config key
+     */
+    private String convertActionToUntrustedConfig(String action) {
+        return switch (action.toLowerCase()) {
+            case "break" -> "block-break";
+            case "place" -> "block-place";
+            case "chest", "container" -> "container-access";
+            case "door" -> "door-interact";
+            case "redstone" -> "button-interact";
+            case "entity_damage" -> "entity-damage";
+            case "vehicle" -> "vehicle-interact";
+            case "decoration" -> "decoration-interact";
             default -> action;
         };
     }

@@ -54,7 +54,7 @@ public class ProtectionListener implements Listener {
         // Check if player can break here
         if (!protectionManager.canBreak(player, block.getLocation())) {
             event.setCancelled(true);
-            sendProtectionMessage(player);
+            sendProtectionMessage(player, "break");
         }
     }
     
@@ -71,7 +71,7 @@ public class ProtectionListener implements Listener {
         // Check if player can place here
         if (!protectionManager.canPlace(player, block.getLocation())) {
             event.setCancelled(true);
-            sendProtectionMessage(player);
+            sendProtectionMessage(player, "place");
         }
     }
     
@@ -97,26 +97,20 @@ public class ProtectionListener implements Listener {
         }
         
         // Check for specific bypass permissions based on interaction type
-        if (action.equals("chest") && player.hasPermission("basedet.bypass.container")) {
+        if (action.equals("container") && player.hasPermission("basedet.bypass.container")) {
             return;
         }
-        if (action.equals("interact")) {
-            // Check if it's a door/gate or redstone device
-            String name = material.name();
-            if ((name.contains("_DOOR") || name.contains("_TRAPDOOR") || name.contains("_GATE")) 
-                    && player.hasPermission("basedet.bypass.door")) {
-                return;
-            }
-            if ((name.contains("_BUTTON") || material == Material.LEVER) 
-                    && player.hasPermission("basedet.bypass.redstone")) {
-                return;
-            }
+        if (action.equals("door") && player.hasPermission("basedet.bypass.door")) {
+            return;
+        }
+        if (action.equals("redstone") && player.hasPermission("basedet.bypass.redstone")) {
+            return;
         }
         
         // Check if player can interact
         if (!protectionManager.canInteract(player, block.getLocation(), action)) {
             event.setCancelled(true);
-            sendProtectionMessage(player);
+            sendProtectionMessage(player, action);
         }
     }
     
@@ -225,18 +219,19 @@ public class ProtectionListener implements Listener {
         if (name.contains("CHEST") || material == Material.BARREL || 
             name.contains("SHULKER_BOX") || material == Material.HOPPER ||
             material == Material.DROPPER || material == Material.DISPENSER) {
-            return "chest";
+            return "container";
         }
         
-        // Doors
+        // Doors and gates
         if (name.contains("_DOOR") || name.contains("_TRAPDOOR") || 
             name.contains("_GATE")) {
-            return "interact";
+            return "door";
         }
         
-        // Buttons and levers
-        if (name.contains("_BUTTON") || material == Material.LEVER) {
-            return "interact";
+        // Buttons, levers, and pressure plates (redstone)
+        if (name.contains("_BUTTON") || material == Material.LEVER ||
+            name.contains("PRESSURE_PLATE")) {
+            return "redstone";
         }
         
         return null;
@@ -245,7 +240,15 @@ public class ProtectionListener implements Listener {
     /**
      * Send protection message to player
      */
-    private void sendProtectionMessage(Player player) {
-        messages.send(player, "protection.protection-active");
+    private void sendProtectionMessage(Player player, String actionType) {
+        String messageKey = switch (actionType) {
+            case "break" -> "protection.no-break-permission";
+            case "place" -> "protection.no-place-permission";
+            case "container" -> "protection.no-container-permission";
+            case "door" -> "protection.no-door-permission";
+            case "redstone" -> "protection.no-redstone-permission";
+            default -> "protection.protection-active";
+        };
+        messages.send(player, messageKey);
     }
 }

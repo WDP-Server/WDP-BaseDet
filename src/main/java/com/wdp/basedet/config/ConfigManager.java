@@ -305,6 +305,15 @@ public class ConfigManager {
         return config.getBoolean("protection.protected-actions." + action, true);
     }
     
+    // Untrusted user permissions
+    public boolean getUntrustedOnline(String permission) {
+        return config.getBoolean("protection.untrusted-online." + permission, false);
+    }
+    
+    public boolean getUntrustedOffline(String permission) {
+        return config.getBoolean("protection.untrusted-offline." + permission, false);
+    }
+    
     // Expansion
     public boolean isExpansionEnabled() {
         return config.getBoolean("expansion.enabled", true);
@@ -513,6 +522,40 @@ public class ConfigManager {
     public boolean isAllowBlocksDuringCombat() { return allowBlocksDuringCombat; }
     public boolean isNotifyPlayersAboutCombat() { return notifyPlayersAboutCombat; }
     public int getPostCombatGrace() { return postCombatGrace; }
+    
+    // Base combat protection getters
+    public boolean isCombatBaseProtectionEnabled() {
+        return config.getBoolean("combat.base-protection.enabled", true);
+    }
+    
+    public boolean isPreventFirstStrike() {
+        return config.getBoolean("combat.base-protection.prevent-first-strike", true);
+    }
+    
+    public boolean isProtectTrustedFromFirstStrike() {
+        return config.getBoolean("combat.base-protection.protect-trusted", false);
+    }
+    
+    public int getRetaliationWindow() {
+        return config.getInt("combat.base-protection.retaliation-window", 30);
+    }
+    
+    public boolean isShowBlockedMessage() {
+        return config.getBoolean("combat.base-protection.show-blocked-message", true);
+    }
+    
+    public boolean isNotifyOwnerOfAttack() {
+        return config.getBoolean("combat.base-protection.notify-owner", true);
+    }
+    
+    public int getProtectionResetDelay() {
+        return config.getInt("combat.base-protection.protection-reset-delay", 10);
+    }
+    
+    public boolean isProtectWhenTagged() {
+        return config.getBoolean("combat.base-protection.protect-when-tagged", true);
+    }
+    
     public boolean isDiscordEnabled() { return discordEnabled; }
     public boolean isDmOnEntry() { return dmOnEntry; }
     public boolean isAllowTrustViaDM() { return allowTrustViaDM; }

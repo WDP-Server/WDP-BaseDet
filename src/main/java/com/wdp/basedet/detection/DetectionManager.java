@@ -471,11 +471,24 @@ public class DetectionManager {
     /**
      * Check minimum distance from existing bases
      */
+    /**
+     * Check minimum distance between new bounds and existing bases
+     * Also checks for overlaps - if new bounds overlap with existing base, reject
+     */
     private boolean checkMinimumDistance(Player player, BoundingBox newBounds, List<Base> existingBases) {
         int minDistance = config.getMinBaseDistance();
         
         for (Base base : existingBases) {
             BoundingBox existing = base.getBounds();
+            
+            // Check if bounds overlap or intersect - if so, silently ignore this detection
+            // This handles the case where expansion was confirmed and player is building in expanded area
+            if (newBounds.intersects(existing)) {
+                // Silently reject - this is building inside/overlapping existing base
+                return false;
+            }
+            
+            // Check distance
             double distance = calculateDistance(newBounds, existing);
             
             if (distance < minDistance) {

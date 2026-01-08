@@ -51,6 +51,9 @@ public class MenuManager implements Listener {
     // Track open menus
     private final Map<UUID, MenuSession> openMenus = new ConcurrentHashMap<>();
     
+    // Track transitions between menus
+    private final Set<UUID> transitioning = ConcurrentHashMap.newKeySet();
+    
     // Track pending teleports
     private final Map<UUID, TeleportTask> pendingTeleports = new ConcurrentHashMap<>();
     
@@ -78,80 +81,66 @@ public class MenuManager implements Listener {
         // Fill background
         fillBackground(inv, Material.GRAY_STAINED_GLASS_PANE);
         
-        // ===== TOP SECTION: Base Overview =====
-        
-        // Base icon (center top)
+        // ===== HEADER: Base Overview =====
         inv.setItem(4, createBaseOverviewItem(base, player));
         
-        // ===== MIDDLE SECTION: Main Options =====
+        // ===== ROW 2: MAIN ACTIONS (slots 19-25) =====
         
-        // Trust Manager (slot 20)
+        // Trust Manager
         inv.setItem(20, createMenuItem(
                 Material.PLAYER_HEAD,
                 hex("#55FFFF") + "✦ Trust Manager",
                 Arrays.asList(
                         "",
-                        hex("#AAAAAA") + "Manage who can interact with",
-                        hex("#AAAAAA") + "your base when you're online",
-                        hex("#AAAAAA") + "or offline.",
-                        "",
+                        hex("#AAAAAA") + "Manage player permissions",
                         hex("#666666") + "Trusted: " + hex("#FFFFFF") + 
-                                plugin.getDatabaseManager().getBaseTrusted(base.getId()).size() + " players",
+                                plugin.getDatabaseManager().getBaseTrusted(base.getId()).size(),
                         "",
-                        hex("#FFFF55") + "▸ Click to manage"
+                        hex("#FFFF55") + "▸ Click to open"
                 ),
                 true
         ));
         
-        // Base Settings (slot 22)
+        // Base Stats
         inv.setItem(22, createMenuItem(
-                Material.SHIELD,
-                hex("#FFAA00") + "✦ Protection Info",
+                Material.BOOK,
+                hex("#55FF55") + "✦ Statistics",
                 Arrays.asList(
                         "",
-                        hex("#AAAAAA") + "View your base",
-                        hex("#AAAAAA") + "protection information.",
-                        "",
-                        hex("#666666") + "Status: " + hex("#55FF55") + "Protected",
+                        hex("#AAAAAA") + "View base details",
+                        hex("#AAAAAA") + "and statistics",
                         "",
                         hex("#FFFF55") + "▸ Click to view"
                 ),
                 false
         ));
         
-        // Selector Tool (slot 24) - Only show if enabled
-        if (plugin.getConfigManager().isSelectorEnabled()) {
-            inv.setItem(24, createMenuItem(
-                    Material.BLAZE_ROD,
-                    hex("#FF5555") + "✦ Modify Boundaries",
-                    Arrays.asList(
-                            "",
-                            hex("#AAAAAA") + "Get the selector tool to",
-                            hex("#AAAAAA") + "adjust your base boundaries.",
-                            "",
-                            hex("#666666") + "Cost: " + hex("#FFD700") + 
-                                    plugin.getConfigManager().getSelectorCostPerBlock() + " SkillCoins/block",
-                            "",
-                            hex("#FFFF55") + "▸ Click to get tool"
-                    ),
-                    false
-            ));
-        }
+        // Protection Info
+        inv.setItem(24, createMenuItem(
+                Material.SHIELD,
+                hex("#FFAA00") + "✦ Protection",
+                Arrays.asList(
+                        "",
+                        hex("#AAAAAA") + "View protection status",
+                        hex("#55FF55") + "✓ Active",
+                        "",
+                        hex("#FFFF55") + "▸ Click for details"
+                ),
+                false
+        ));
         
-        // ===== BOTTOM SECTION: Quick Actions =====
+        // ===== ROW 3: TOOLS & UTILITIES (slots 28-34) =====
         
-        // View Particles (slot 29) - Only show if particles are enabled
+        // Particles toggle
         if (plugin.getConfigManager().areParticlesEnabled() && plugin.getConfigManager().isAllowParticleToggle()) {
             boolean viewing = plugin.getParticleManager().isViewing(player.getUniqueId());
             inv.setItem(29, createMenuItem(
                     Material.END_ROD,
-                    (viewing ? hex("#55FF55") : hex("#FF5555")) + "✦ Boundary Particles",
+                    (viewing ? hex("#55FF55") : hex("#888888")) + "Particles",
                     Arrays.asList(
                             "",
-                            hex("#AAAAAA") + "Toggle particle visualization",
-                            hex("#AAAAAA") + "of your base boundaries.",
-                            "",
-                            hex("#666666") + "Status: " + (viewing ? hex("#55FF55") + "ON" : hex("#FF5555") + "OFF"),
+                            hex("#AAAAAA") + "Toggle boundary visibility",
+                            hex("#666666") + "Status: " + (viewing ? hex("#55FF55") + "ON" : hex("#888888") + "OFF"),
                             "",
                             hex("#FFFF55") + "▸ Click to toggle"
                     ),
@@ -159,46 +148,47 @@ public class MenuManager implements Listener {
             ));
         }
         
-        // Teleport to Base (slot 30) - Only show if enabled
+        // Teleport
         if (plugin.getConfigManager().isTeleportEnabled()) {
-            inv.setItem(30, createTeleportItem(player, base));
+            inv.setItem(31, createTeleportItem(player, base));
         }
         
-        // Base Stats (slot 31)
-        inv.setItem(31, createMenuItem(
-                Material.BOOK,
-                hex("#55FF55") + "✦ Base Statistics",
-                Arrays.asList(
-                        "",
-                        hex("#AAAAAA") + "View detailed statistics",
-                        hex("#AAAAAA") + "about your base.",
-                        "",
-                        hex("#FFFF55") + "▸ Click to view"
-                ),
-                false
-        ));
+        // Selector Tool
+        if (plugin.getConfigManager().isSelectorEnabled()) {
+            inv.setItem(33, createMenuItem(
+                    Material.BLAZE_ROD,
+                    hex("#FFD700") + "Modify Tool",
+                    Arrays.asList(
+                            "",
+                            hex("#AAAAAA") + "Adjust base boundaries",
+                            hex("#666666") + "Cost: " + hex("#FFD700") + 
+                                    plugin.getConfigManager().getSelectorCostPerBlock() + "/block",
+                            "",
+                            hex("#FFFF55") + "▸ Click to get"
+                    ),
+                    false
+            ));
+        }
         
-        // Abandon Base (slot 33)
-        inv.setItem(33, createMenuItem(
+        // ===== ROW 4: DANGER ZONE =====
+        inv.setItem(40, createMenuItem(
                 Material.BARRIER,
-                hex("#FF5555") + "✦ Abandon Base",
+                hex("#FF5555") + "Abandon Base",
                 Arrays.asList(
                         "",
-                        hex("#AAAAAA") + "Remove this base from your",
-                        hex("#AAAAAA") + "protected bases list.",
+                        hex("#FF5555") + "⚠ PERMANENT ACTION",
+                        hex("#AAAAAA") + "Removes base protection",
                         "",
-                        hex("#FF5555") + "⚠ This cannot be undone!",
-                        "",
-                        hex("#FFFF55") + "▸ Shift-Click to abandon"
+                        hex("#FFFF55") + "▸ Shift-Click to confirm"
                 ),
                 false
         ));
         
         // Add navbar
-        addMainNavbar(inv, "main");
+        addMainNavbar(inv, player, "main");
         
-        // Track menu
-        openMenus.put(player.getUniqueId(), new MenuSession(MenuType.MAIN, base, null, 1, null));
+        // Track menu with empty navbar context (no previous menu)
+        openMenus.put(player.getUniqueId(), new MenuSession(MenuType.MAIN, base, null, 1, null, new HashMap<>()));
         
         player.openInventory(inv);
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.5f, 1.2f);
@@ -239,12 +229,12 @@ public class MenuManager implements Listener {
         }
         
         // Add selector navbar
-        addSelectorNavbar(inv);
+        addSelectorNavbar(inv, player);
         
         // Track menu with list of bases stored
         Map<String, Object> data = new HashMap<>();
         data.put("bases", bases);
-        openMenus.put(player.getUniqueId(), new MenuSession(MenuType.BASE_SELECTOR, null, null, 1, data));
+        openMenus.put(player.getUniqueId(), new MenuSession(MenuType.BASE_SELECTOR, null, null, 1, data, new HashMap<>()));
         
         player.openInventory(inv);
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.5f, 1.2f);
@@ -330,21 +320,7 @@ public class MenuManager implements Listener {
         };
     }
     
-    private void addSelectorNavbar(Inventory inv) {
-        // Empty decorations
-        ItemStack deco = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta decoMeta = deco.getItemMeta();
-        decoMeta.setDisplayName(" ");
-        deco.setItemMeta(decoMeta);
-        
-        for (int i = 45; i <= 52; i++) {
-            inv.setItem(i, deco);
-        }
-        
-        // Close (slot 53)
-        ItemStack close = createNavItem(Material.BARRIER, hex("#FF5555") + "✗ Close", "Close this menu");
-        inv.setItem(53, close);
-    }
+
     
     // ==================== TRUST MANAGER MENU ====================
     
@@ -398,10 +374,12 @@ public class MenuManager implements Listener {
         ));
         
         // Add navbar
-        addSubNavbar(inv, "trust");
+        addTrustNavbar(inv, player, 1, 1);
         
-        // Track menu
-        openMenus.put(player.getUniqueId(), new MenuSession(MenuType.TRUST_LIST, base, null, 1, null));
+        // Track menu with previous_menu context
+        Map<String, Object> navbarContext = new HashMap<>();
+        navbarContext.put("previous_menu", "main");
+        openMenus.put(player.getUniqueId(), new MenuSession(MenuType.TRUST_LIST, base, null, 1, null, navbarContext));
         
         player.openInventory(inv);
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
@@ -516,10 +494,12 @@ public class MenuManager implements Listener {
         }
         
         // Add permissions navbar
-        addPermissionsNavbar(inv, page, trustedName);
+        addPermissionsNavbar(inv, player, page, trustedName);
         
-        // Track menu
-        openMenus.put(player.getUniqueId(), new MenuSession(MenuType.TRUST_PERMS, base, trustEntry, page, null));
+        // Track menu with previous_menu context
+        Map<String, Object> navbarContext = new HashMap<>();
+        navbarContext.put("previous_menu", "trust_list");
+        openMenus.put(player.getUniqueId(), new MenuSession(MenuType.TRUST_PERMS, base, trustEntry, page, null, navbarContext));
         
         player.openInventory(inv);
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
@@ -637,10 +617,12 @@ public class MenuManager implements Listener {
         ));
         
         // Add navbar
-        addSubNavbar(inv, "stats");
+        addStatsNavbar(inv, player);
         
-        // Track menu
-        openMenus.put(player.getUniqueId(), new MenuSession(MenuType.STATS, base, null, 1, null));
+        // Track menu with previous_menu context
+        Map<String, Object> navbarContext = new HashMap<>();
+        navbarContext.put("previous_menu", "main");
+        openMenus.put(player.getUniqueId(), new MenuSession(MenuType.STATS, base, null, 1, null, navbarContext));
         
         player.openInventory(inv);
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
@@ -727,8 +709,10 @@ public class MenuManager implements Listener {
         // Add navbar
         addSubNavbar(inv, "settings");
         
-        // Track menu
-        openMenus.put(player.getUniqueId(), new MenuSession(MenuType.SETTINGS, base, null, 1, null));
+        // Track menu with previous_menu context
+        Map<String, Object> navbarContext = new HashMap<>();
+        navbarContext.put("previous_menu", "main");
+        openMenus.put(player.getUniqueId(), new MenuSession(MenuType.SETTINGS, base, null, 1, null, navbarContext));
         
         player.openInventory(inv);
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
@@ -766,15 +750,45 @@ public class MenuManager implements Listener {
             case TRUST_LIST -> handleTrustListClick(player, session, slot, clicked);
             case TRUST_PERMS -> handlePermsClick(player, session, slot);
             case BASE_SELECTOR -> handleBaseSelectorClick(player, session, slot, clicked);
-            case STATS, SETTINGS -> {} // View-only menus
+            case STATS -> handleStatsMenuClick(player, session, slot);
+            case SETTINGS -> handleSettingsMenuClick(player, session, slot);
         }
     }
     
     private void handleMainMenuClick(Player player, MenuSession session, int slot, boolean shift) {
         switch (slot) {
-            case 20 -> openTrustMenu(player, session.base); // Trust Manager
-            case 22 -> openSettingsMenu(player, session.base); // Settings
-            case 24 -> { // Selector Tool
+            case 20 -> { // Trust Manager
+                transitioning.add(player.getUniqueId());
+                openTrustMenu(player, session.base);
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
+                Bukkit.getScheduler().runTask(plugin, () -> transitioning.remove(player.getUniqueId()));
+            }
+            case 22 -> { // Stats
+                transitioning.add(player.getUniqueId());
+                openStatsMenu(player, session.base);
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
+                Bukkit.getScheduler().runTask(plugin, () -> transitioning.remove(player.getUniqueId()));
+            }
+            case 24 -> { // Protection Info
+                transitioning.add(player.getUniqueId());
+                openSettingsMenu(player, session.base);
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
+                Bukkit.getScheduler().runTask(plugin, () -> transitioning.remove(player.getUniqueId()));
+            }
+            case 29 -> { // Toggle particles
+                boolean now = plugin.getParticleManager().toggleViewing(player.getUniqueId());
+                messages.send(player, now ? "success.particles-enabled" : "success.particles-disabled");
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, now ? 1.2f : 0.8f);
+                // Refresh menu with updated particle state
+                transitioning.add(player.getUniqueId());
+                openMainMenu(player, session.base);
+                Bukkit.getScheduler().runTask(plugin, () -> transitioning.remove(player.getUniqueId()));
+            }
+            case 31 -> { // Teleport
+                player.closeInventory();
+                startTeleport(player, session.base);
+            }
+            case 33 -> { // Selector Tool
                 if (!plugin.getConfigManager().isSelectorEnabled()) {
                     messages.send(player, "errors.selector-disabled");
                     return;
@@ -785,23 +799,9 @@ public class MenuManager implements Listener {
                 }
                 player.closeInventory();
                 plugin.getSelectorTool().giveSelectorTool(player);
+                player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.7f, 1.2f);
             }
-            case 29 -> { // Toggle particles
-                boolean now = plugin.getParticleManager().toggleViewing(player.getUniqueId());
-                if (now) {
-                    messages.send(player, "success.particles-enabled");
-                } else {
-                    messages.send(player, "success.particles-disabled");
-                }
-                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
-                openMainMenu(player, session.base); // Refresh
-            }
-            case 30 -> { // Teleport to base
-                player.closeInventory();
-                startTeleport(player, session.base);
-            }
-            case 31 -> openStatsMenu(player, session.base); // Stats
-            case 33 -> { // Abandon base
+            case 40 -> { // Abandon base
                 if (shift) {
                     plugin.getDatabaseManager().deleteBase(session.base.getId());
                     player.closeInventory();
@@ -809,9 +809,18 @@ public class MenuManager implements Listener {
                     player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 0.8f);
                 } else {
                     messages.send(player, "success.shift-click-to-abandon");
+                    player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.5f, 0.5f);
                 }
             }
         }
+    }
+    
+    private void handleStatsMenuClick(Player player, MenuSession session, int slot) {
+        // Stats menu is view-only, no actions needed
+    }
+    
+    private void handleSettingsMenuClick(Player player, MenuSession session, int slot) {
+        // Settings menu is view-only, no actions needed
     }
     
     @SuppressWarnings("unchecked")
@@ -831,8 +840,10 @@ public class MenuManager implements Listener {
             for (int i = 0; i < slots.length && i < bases.size(); i++) {
                 if (slots[i] == slot) {
                     Base selectedBase = bases.get(i);
+                    transitioning.add(player.getUniqueId());
                     openMainMenu(player, selectedBase);
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
+                    Bukkit.getScheduler().runTask(plugin, () -> transitioning.remove(player.getUniqueId()));
                     return;
                 }
             }
@@ -847,7 +858,9 @@ public class MenuManager implements Listener {
                 UUID trustedUUID = skullMeta.getOwningPlayer().getUniqueId();
                 TrustEntry entry = plugin.getDatabaseManager().getTrust(session.base.getId(), trustedUUID);
                 if (entry != null) {
+                    transitioning.add(player.getUniqueId());
                     openPermissionsMenu(player, session.base, entry, 1);
+                    Bukkit.getScheduler().runTask(plugin, () -> transitioning.remove(player.getUniqueId()));
                 }
             }
         }
@@ -878,7 +891,9 @@ public class MenuManager implements Listener {
                 plugin.getDatabaseManager().updateTrustPermission(session.trustEntry.getId(), column, !current);
                 TrustEntry updated = plugin.getDatabaseManager().getTrust(session.base.getId(), session.trustEntry.getTrustedUUID());
                 if (updated != null) {
+                    transitioning.add(player.getUniqueId());
                     openPermissionsMenu(player, session.base, updated, session.page);
+                    Bukkit.getScheduler().runTask(plugin, () -> transitioning.remove(player.getUniqueId()));
                 }
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, current ? 0.8f : 1.2f);
             }
@@ -886,31 +901,37 @@ public class MenuManager implements Listener {
     }
     
     private void handleNavbarClick(Player player, MenuSession session, int slot, boolean shift) {
-        // Use unified navbar action system
-        UnifiedMenuManager.NavbarAction action = unifiedMenuManager.getNavbarAction(slot);
+        // Use unified navbar action system with context
+        UnifiedMenuManager.NavbarAction action = unifiedMenuManager.getNavbarAction(slot, session.navbarContext);
 
         switch (action) {
             case BACK:
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 0.8f);
+                transitioning.add(player.getUniqueId());
                 switch (session.type) {
                     case TRUST_LIST -> openMainMenu(player, session.base);
                     case STATS -> openMainMenu(player, session.base);
                     case SETTINGS -> openMainMenu(player, session.base);
                     case TRUST_PERMS -> openTrustMenu(player, session.base);
-                    case BASE_SELECTOR -> player.closeInventory();
-                    case MAIN -> player.closeInventory();
+                    case BASE_SELECTOR -> { player.closeInventory(); transitioning.remove(player.getUniqueId()); return; }
+                    case MAIN -> { player.closeInventory(); transitioning.remove(player.getUniqueId()); return; }
                 }
+                Bukkit.getScheduler().runTask(plugin, () -> transitioning.remove(player.getUniqueId()));
                 break;
             case PREVIOUS_PAGE:
                 if (session.type == MenuType.TRUST_PERMS && session.page > 1) {
                     player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
+                    transitioning.add(player.getUniqueId());
                     openPermissionsMenu(player, session.base, session.trustEntry, session.page - 1);
+                    Bukkit.getScheduler().runTask(plugin, () -> transitioning.remove(player.getUniqueId()));
                 }
                 break;
             case NEXT_PAGE:
                 if (session.type == MenuType.TRUST_PERMS && session.page < 2) {
                     player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
+                    transitioning.add(player.getUniqueId());
                     openPermissionsMenu(player, session.base, session.trustEntry, session.page + 1);
+                    Bukkit.getScheduler().runTask(plugin, () -> transitioning.remove(player.getUniqueId()));
                 }
                 break;
             case CLOSE:
@@ -927,7 +948,11 @@ public class MenuManager implements Listener {
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (event.getPlayer() instanceof Player player) {
-            openMenus.remove(player.getUniqueId());
+            UUID uuid = player.getUniqueId();
+            // Only remove session if not transitioning to another menu
+            if (!transitioning.contains(uuid)) {
+                openMenus.remove(uuid);
+            }
         }
     }
     
@@ -1172,6 +1197,99 @@ public class MenuManager implements Listener {
     
     private String hex(String code) {
         return ChatColor.of(code).toString();
+    }
+    
+    // ==================== NAVBAR METHODS ====================
+    
+    /**
+     * Add main menu navbar
+     */
+    private void addMainNavbar(Inventory inv, Player player, String menuContext) {
+        Map<String, Object> context = new HashMap<>();
+        context.put("coins", getPlayerCoins(player));
+        context.put("tokens", getPlayerTokens(player));
+        context.put("hide_pages", true);
+        unifiedMenuManager.applyNavbar(inv, player, menuContext, context);
+    }
+    
+    /**
+     * Add selector navbar (base selection menu)
+     */
+    private void addSelectorNavbar(Inventory inv, Player player) {
+        Map<String, Object> context = new HashMap<>();
+        context.put("coins", getPlayerCoins(player));
+        context.put("tokens", getPlayerTokens(player));
+        context.put("hide_pages", true);
+        unifiedMenuManager.applyNavbar(inv, player, "selector", context);
+    }
+    
+    /**
+     * Add permissions menu navbar with pagination
+     */
+    private void addPermissionsNavbar(Inventory inv, Player player, int page, String trustedName) {
+        Map<String, Object> context = new HashMap<>();
+        context.put("page", page);
+        context.put("total_pages", 2);
+        context.put("coins", getPlayerCoins(player));
+        context.put("tokens", getPlayerTokens(player));
+        context.put("previous_menu", "trust");
+        unifiedMenuManager.applyNavbar(inv, player, "permissions", context);
+    }
+    
+    /**
+     * Add trust list navbar
+     */
+    private void addTrustNavbar(Inventory inv, Player player, int page, int totalPages) {
+        Map<String, Object> context = new HashMap<>();
+        context.put("page", page);
+        context.put("total_pages", totalPages);
+        context.put("coins", getPlayerCoins(player));
+        context.put("tokens", getPlayerTokens(player));
+        context.put("previous_menu", "main");
+        context.put("hide_pages", true);
+        unifiedMenuManager.applyNavbar(inv, player, "trust", context);
+    }
+    
+    /**
+     * Add stats menu navbar
+     */
+    private void addStatsNavbar(Inventory inv, Player player) {
+        Map<String, Object> context = new HashMap<>();
+        context.put("coins", getPlayerCoins(player));
+        context.put("tokens", getPlayerTokens(player));
+        context.put("previous_menu", "main");
+        context.put("hide_pages", true);
+        unifiedMenuManager.applyNavbar(inv, player, "stats", context);
+    }
+    
+    /**
+     * Get player coins (SkillCoins integration)
+     */
+    private long getPlayerCoins(Player player) {
+        if (player == null || plugin.getEconomyIntegration() == null) {
+            return 0;
+        }
+        return (long) plugin.getEconomyIntegration().getBalance(player);
+    }
+    
+    /**
+     * Get player tokens from AuraSkills
+     */
+    private long getPlayerTokens(Player player) {
+        if (player == null) return 0;
+        
+        try {
+            org.bukkit.plugin.Plugin auraSkillsPlugin = Bukkit.getPluginManager().getPlugin("AuraSkills");
+            if (auraSkillsPlugin != null) {
+                // Use public API method
+                java.lang.reflect.Method getTokensMethod = auraSkillsPlugin.getClass().getMethod("getPlayerTokens", java.util.UUID.class);
+                Object balance = getTokensMethod.invoke(auraSkillsPlugin, player.getUniqueId());
+                return ((Number) balance).longValue();
+            }
+        } catch (Exception e) {
+            // Silent fail - AuraSkills integration optional
+        }
+        return 0;
     }
     
     // ==================== TELEPORT SYSTEM ====================
@@ -1474,13 +1592,19 @@ public class MenuManager implements Listener {
         final TrustEntry trustEntry;
         final int page;
         final Map<String, Object> data;
+        final Map<String, Object> navbarContext;
         
         MenuSession(MenuType type, Base base, TrustEntry trustEntry, int page, Map<String, Object> data) {
+            this(type, base, trustEntry, page, data, new HashMap<>());
+        }
+        
+        MenuSession(MenuType type, Base base, TrustEntry trustEntry, int page, Map<String, Object> data, Map<String, Object> navbarContext) {
             this.type = type;
             this.base = base;
             this.trustEntry = trustEntry;
             this.page = page;
             this.data = data;
+            this.navbarContext = navbarContext;
         }
     }
     

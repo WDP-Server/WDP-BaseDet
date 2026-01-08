@@ -728,6 +728,12 @@ selector:
 # ===========================================
 protection:
   protection-active: "&cThis area is protected! The owner is offline."
+  protection-active-online: "&cThis area is protected! You are not trusted here."
+  no-break-permission: "&cYou cannot break blocks here!"
+  no-place-permission: "&cYou cannot place blocks here!"
+  no-container-permission: "&cYou cannot open containers here!"
+  no-door-permission: "&cYou cannot use doors here!"
+  no-redstone-permission: "&cYou cannot use buttons/levers here!"
   
   # Combat notifications
   combat-enter: "&e⚔ Combat detected! Base protection temporarily lifted."
@@ -741,6 +747,9 @@ combat:
   tagged: "&c⚔ You are now in combat! Don't log out!"
   ended: "&a✓ You are no longer in combat."
   leave-zone: "&aYou left the combat zone. Protection restored."
+  first-strike-blocked: "&c⚔ You cannot attack the base owner first! They must attack you first."
+  attempted-attack: "&e⚔ Warning: &c{attacker} &etried to attack you in your base!"
+  retaliation-enabled: "&a✓ You can now fight back against your attacker for 30 seconds!"
 
 # ===========================================
 # NAVBAR ITEMS

@@ -3,6 +3,7 @@ package com.wdp.basedet.detection;
 import com.wdp.basedet.WDPBaseDetPlugin;
 import com.wdp.basedet.config.ConfigManager;
 import com.wdp.basedet.detection.LocationCluster.ClusterType;
+import com.wdp.basedet.model.Base;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -73,7 +74,26 @@ public class ClusterManager {
     public LocationCluster getOrCreateCluster(UUID playerId, String world, int x, int y, int z) {
         List<LocationCluster> clusters = playerClusters.computeIfAbsent(playerId, k -> new ArrayList<>());
         
-        // Find existing cluster within range
+        // PRIORITY 1: Check if player has a confirmed base nearby
+        // If placing blocks near an existing base, contribute to expansion instead of creating new cluster
+        List<Base> playerBases = plugin.getDatabaseManager().getPlayerBases(playerId);
+        for (Base base : playerBases) {
+            if (!base.isConfirmed()) continue;
+            if (!base.getWorldName().equals(world)) continue;
+            
+            double distanceToBase = base.getBounds().getDistanceToEdge(x, y, z);
+            int expansionThreshold = config.getExpansionDistanceThreshold();
+            
+            // If within expansion distance of a confirmed base, DON'T create new cluster
+            // The expansion manager will handle this separately
+            if (distanceToBase > 0 && distanceToBase <= expansionThreshold) {
+                // Return null to indicate this should be handled by expansion system
+                // The caller (processInteraction) will still track it via expansion manager
+                return null;
+            }
+        }
+        
+        // PRIORITY 2: Find existing cluster within range
         LocationCluster nearestCluster = null;
         double nearestDistance = Double.MAX_VALUE;
         
@@ -152,6 +172,13 @@ public class ClusterManager {
                 interaction.getZ()
         );
         
+        // If cluster is null, it means this interaction is near a confirmed base
+        // and should be handled by the expansion system instead
+        if (cluster == null) {
+            // Expansion manager will handle this separately
+            return;
+        }
+        
         // Get base score from interaction
         double score = interaction.getScore();
         
@@ -192,7 +219,7 @@ public class ClusterManager {
         // Add score to cluster
         cluster.addScore(score);
         
-        // Debug output
+        // Debug output - ONLY IF DEBUG IS ENABLED
         if (isDebugEnabled(playerId)) {
             String typeColor = switch (cluster.getType()) {
                 case BASE -> "&a";

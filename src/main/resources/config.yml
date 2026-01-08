@@ -3,7 +3,7 @@
 
 # Configuration version - DO NOT EDIT THIS
 # This is used for automatic config migration
-config-version: 3
+config-version: 5
 
 # ===========================================
 # DATABASE SETTINGS
@@ -222,6 +222,38 @@ protection:
     lever-interact: true
     entity-damage: true
     item-pickup: false
+  
+  # ===========================================
+  # UNTRUSTED USER PERMISSIONS
+  # ===========================================
+  # Control what untrusted users can do in your base
+  # These are separate from the trust system above
+  
+  # What untrusted users can do when owner is ONLINE
+  untrusted-online:
+    block-break: false
+    block-place: false
+    container-access: true    # Allow opening chests/barrels when you're online
+    door-interact: true       # Allow using doors/gates
+    button-interact: true     # Allow using buttons/levers/plates
+    lever-interact: true
+    entity-damage: false      # Prevent killing animals/villagers
+    vehicle-interact: true    # Allow boats/minecarts
+    decoration-interact: true # Allow item frames/armor stands
+    item-pickup: true         # Allow picking up items
+  
+  # What untrusted users can do when owner is OFFLINE
+  untrusted-offline:
+    block-break: false
+    block-place: false
+    container-access: false   # Block chests when you're offline
+    door-interact: false      # Block doors when offline for security
+    button-interact: false    # Block redstone when offline
+    lever-interact: false
+    entity-damage: false
+    vehicle-interact: false
+    decoration-interact: false
+    item-pickup: false
 
 # ===========================================
 # TRUST SETTINGS
@@ -320,6 +352,38 @@ combat:
     show-bossbar: true
     # Boss bar color (RED, YELLOW, GREEN, BLUE, PINK, PURPLE, WHITE)
     bossbar-color: RED
+  
+  # ===========================================
+  # BASE COMBAT PROTECTION
+  # ===========================================
+  # Protect base owners from being attacked first in their own base
+  # 
+  # HOW IT WORKS:
+  # 1. Untrusted user enters your base -> they CANNOT attack you first
+  # 2. You attack them -> they can now fight back for the retaliation window
+  # 3. After the window expires -> protection resets, they can't attack first again
+  #
+  # This prevents griefing while still allowing you to defend your base
+  base-protection:
+    # Enable base combat protection
+    enabled: true
+    # Prevent untrusted users from attacking base owner first
+    # (Owner must attack them first to enable PvP)
+    prevent-first-strike: true
+    # Also protect trusted users from first strike
+    # Set to true if you want trusted players to also be protected
+    protect-trusted: false
+    # Grace period after owner attacks (seconds) - how long the defender can fight back
+    retaliation-window: 30
+    # Show message when attack is blocked
+    show-blocked-message: true
+    # Show message to owner when someone tries to attack them
+    notify-owner: true
+    # Cool down period after combat ends before protection resets (seconds)
+    protection-reset-delay: 10
+    # Protect owner even if they are combat tagged from outside the base
+    protect-when-tagged: true
+  
   # Radius around base to trigger combat rules
   radius: 50
   # Allow fighting in base when combat tagged
