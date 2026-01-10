@@ -4,9 +4,7 @@ import com.wdp.basedet.combat.CombatManager;
 import com.wdp.basedet.command.BaseDetCommand;
 import com.wdp.basedet.command.TrustCommand;
 import com.wdp.basedet.config.ConfigManager;
-import com.wdp.basedet.config.MessageManager;
 import com.wdp.basedet.database.DatabaseManager;
-import com.wdp.basedet.detection.ClusterManager;
 import com.wdp.basedet.detection.DetectionManager;
 import com.wdp.basedet.detection.ExpansionManager;
 import com.wdp.basedet.detection.ScoreManager;
@@ -43,12 +41,10 @@ public class WDPBaseDetPlugin extends JavaPlugin {
     
     // Managers
     private ConfigManager configManager;
-    private MessageManager messageManager;
     private DatabaseManager databaseManager;
     private DetectionManager detectionManager;
     private ExpansionManager expansionManager;
     private ScoreManager scoreManager;
-    private ClusterManager clusterManager;
     private ProtectionManager protectionManager;
     private TrustManager trustManager;
     private MenuManager menuManager;
@@ -76,9 +72,6 @@ public class WDPBaseDetPlugin extends JavaPlugin {
         configManager = new ConfigManager(this);
         configManager.loadConfig();
         
-        // Load messages
-        messageManager = new MessageManager(this);
-        
         // Initialize database
         getLogger().info("Initializing database...");
         databaseManager = new DatabaseManager(this);
@@ -92,7 +85,6 @@ public class WDPBaseDetPlugin extends JavaPlugin {
         // Initialize managers
         getLogger().info("Initializing managers...");
         scoreManager = new ScoreManager(this);
-        clusterManager = new ClusterManager(this);
         detectionManager = new DetectionManager(this);
         expansionManager = new ExpansionManager(this);
         protectionManager = new ProtectionManager(this);
@@ -100,7 +92,7 @@ public class WDPBaseDetPlugin extends JavaPlugin {
         menuManager = new MenuManager(this);
         particleManager = new ParticleManager(this);
         selectorTool = new SelectorTool(this);
-        getLogger().info("✓ Managers initialized (including ClusterManager for multi-location tracking)");
+        getLogger().info("✓ Managers initialized");
         
         // Setup integrations
         setupIntegrations();
@@ -201,7 +193,6 @@ public class WDPBaseDetPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new BlockListener(this), this);
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ProtectionListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new com.wdp.basedet.listener.CombatProtectionListener(this), this);
         Bukkit.getPluginManager().registerEvents(menuManager, this);
         Bukkit.getPluginManager().registerEvents(selectorTool, this);
         
@@ -252,9 +243,6 @@ public class WDPBaseDetPlugin extends JavaPlugin {
         getLogger().info("Reloading WDP-BaseDet...");
         reloadConfig();
         configManager.loadConfig();
-        if (messageManager != null) {
-            messageManager.reload();
-        }
         getLogger().info("✓ Configuration reloaded");
     }
     
@@ -267,14 +255,6 @@ public class WDPBaseDetPlugin extends JavaPlugin {
         return configManager;
     }
     
-    public MessageManager getMessages() {
-        return messageManager;
-    }
-    
-    public MessageManager getMessageManager() {
-        return messageManager;
-    }
-    
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
     }
@@ -285,10 +265,6 @@ public class WDPBaseDetPlugin extends JavaPlugin {
     
     public ScoreManager getScoreManager() {
         return scoreManager;
-    }
-    
-    public ClusterManager getClusterManager() {
-        return clusterManager;
     }
     
     public ProtectionManager getProtectionManager() {

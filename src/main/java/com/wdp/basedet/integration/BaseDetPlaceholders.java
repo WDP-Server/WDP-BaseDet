@@ -11,9 +11,17 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.UUID;
+import com.wdp.basedet.model.TrustEntry;
+import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.SimpleDateFormat;
+import java.util.List;
 
 /**
  * PlaceholderAPI expansion for WDP-BaseDet
